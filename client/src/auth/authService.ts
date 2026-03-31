@@ -13,7 +13,7 @@ export async function loginWithPassword(payload: PasswordLoginPayload): Promise<
     return { success: true }
   }
 
-  const res = await fetch(apiUrl('/auth/login'), {
+  const res = await fetch(apiUrl('/api/auth/login'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
