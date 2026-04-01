@@ -100,13 +100,13 @@ export function DashboardShell({ role }: DashboardShellProps) {
             to="/"
             className="mb-8 flex items-center gap-2.5 rounded-[12px] px-2 py-1 text-white no-underline"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-white/15 text-xs font-bold text-secondary">
-              AA
+            <span className="flex h-9 min-w-9 items-center justify-center rounded-[12px] border border-secondary/30 bg-primary px-2 text-xs font-semibold text-secondary">
+              G10
             </span>
-            <span className="font-semibold tracking-tight">Apex Academy</span>
+            <span className="font-[var(--font-brand)] text-lg tracking-wide text-secondary">G10 AMR</span>
           </Link>
 
-          <p className="mb-3 px-2 text-xs font-semibold uppercase tracking-wider text-white/60">
+          <p className="mb-3 px-2 text-xs font-semibold uppercase tracking-wider text-secondary/80">
             {roleTitle[role]}
           </p>
 

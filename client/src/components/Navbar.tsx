@@ -16,23 +16,23 @@ export function Navbar() {
 
   return (
     <header
-      className="fixed top-0 right-0 left-0 z-50 border-b border-white/30 bg-white/75 shadow-[0_1px_0_rgba(15,47,79,0.06)] backdrop-blur-md backdrop-saturate-150"
+      className="fixed top-0 right-0 left-0 z-50 border-b border-white/15 bg-primary shadow-[0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md backdrop-saturate-150"
       role="banner"
     >
       <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-4 px-4 sm:px-6 lg:px-8">
         <Link
           to="/"
-          className="flex shrink-0 items-center gap-2.5 text-primary no-underline"
+          className="flex shrink-0 items-center gap-2.5 text-white no-underline"
           onClick={() => setOpen(false)}
         >
           <span
-            className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-primary text-sm font-bold text-white shadow-[var(--shadow-soft)]"
+            className="flex h-9 min-w-9 items-center justify-center rounded-[12px] border border-secondary/30 bg-primary px-2 text-xs font-semibold text-secondary shadow-[var(--shadow-soft)]"
             aria-hidden
           >
-            AA
+            G10
           </span>
-          <span className="font-semibold tracking-tight text-primary">
-            Apex Academy
+          <span className="font-[var(--font-brand)] text-lg tracking-wide text-secondary">
+            G10 AMR
           </span>
         </Link>
 
@@ -44,7 +44,7 @@ export function Navbar() {
             <a
               key={item.href}
               href={item.href}
-              className="rounded-[10px] px-3 py-2 text-sm font-medium text-primary/80 transition-colors hover:bg-primary/5 hover:text-primary"
+              className="rounded-[10px] px-3 py-2 text-sm font-medium text-white/85 transition-colors hover:bg-white/10 hover:text-secondary"
             >
               {item.label}
             </a>
@@ -61,7 +61,7 @@ export function Navbar() {
 
           <button
             type="button"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-[12px] border border-primary/10 bg-white/80 text-primary md:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-[12px] border border-white/20 bg-white/10 text-white md:hidden"
             aria-expanded={open}
             aria-controls="mobile-nav"
             aria-label={open ? 'Close menu' : 'Open menu'}
@@ -82,14 +82,14 @@ export function Navbar() {
 
       <div
         id="mobile-nav"
-        className={`border-t border-primary/5 bg-white/90 backdrop-blur-md md:hidden ${open ? 'block' : 'hidden'}`}
+        className={`border-t border-white/15 bg-primary backdrop-blur-md md:hidden ${open ? 'block' : 'hidden'}`}
       >
         <nav className="mx-auto flex max-w-[1400px] flex-col gap-0.5 px-4 py-3 sm:px-6" aria-label="Mobile">
           {navItems.map((item) => (
             <a
               key={item.href}
               href={item.href}
-              className="rounded-[10px] px-3 py-2.5 text-sm font-medium text-primary/85 hover:bg-primary/5"
+              className="rounded-[10px] px-3 py-2.5 text-sm font-medium text-white/90 hover:bg-white/10 hover:text-secondary"
               onClick={() => setOpen(false)}
             >
               {item.label}

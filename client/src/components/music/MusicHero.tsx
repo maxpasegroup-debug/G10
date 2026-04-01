@@ -62,9 +62,9 @@ export function MusicHero() {
         style={{ backgroundImage: `url(${STUDIO_BG})` }}
         aria-hidden
       />
-      <div className="pointer-events-none absolute inset-0 bg-primary/55 backdrop-blur-md" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 bg-primary/60 backdrop-blur-md" aria-hidden />
       <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary/40 via-primary/65 to-primary/90"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#0f2f4f]/70 via-[#0f2f4f]/65 to-[#1f4e79]/85"
         aria-hidden
       />
 
@@ -72,7 +72,7 @@ export function MusicHero() {
         <div className="mx-auto max-w-4xl text-center">
           <h1
             id="music-hero-title"
-            className="text-balance text-2xl font-bold uppercase leading-tight tracking-wide text-white drop-shadow-sm sm:text-3xl md:text-4xl lg:text-[2.35rem] lg:leading-[1.15]"
+            className="text-balance text-3xl font-bold uppercase leading-tight tracking-wide text-white drop-shadow-sm sm:text-4xl md:text-5xl lg:text-[3.2rem] lg:leading-[1.12]"
           >
             TRIVANDRAM&apos;S 1ST HOME STUDIO BASED MUSIC EDUCATION
           </h1>

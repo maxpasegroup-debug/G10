@@ -21,10 +21,10 @@ export function AuthLayout({ children }: AuthLayoutProps) {
               to="/"
               className="mb-10 inline-flex w-fit items-center gap-2.5 text-sm font-medium text-white/90 no-underline transition hover:text-white"
             >
-              <span className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-white/15 text-xs font-bold text-secondary backdrop-blur-sm">
-                AA
+              <span className="flex h-9 min-w-9 items-center justify-center rounded-[12px] border border-secondary/30 bg-primary px-2 text-xs font-semibold text-secondary backdrop-blur-sm">
+                G10
               </span>
-              Apex Academy
+              <span className="font-[var(--font-brand)] text-lg tracking-wide text-secondary">G10 AMR</span>
             </Link>
             <p className="max-w-md text-3xl font-semibold leading-tight tracking-tight text-white xl:text-4xl">
               Learn, practice, and grow — in one secure place.
@@ -34,7 +34,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
             </p>
           </div>
           <div className="relative z-10 border-t border-white/10 px-10 py-6 text-xs text-white/50 xl:px-14">
-            © {new Date().getFullYear()} Apex Academy
+            © {new Date().getFullYear()} G10 AMR
           </div>
         </aside>
 
