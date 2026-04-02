@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 const classDetails = [
   'Junior Melodies',
   'Intermediate Rhythms',
@@ -27,7 +29,8 @@ export function MusicLandingSections() {
       <div className="grid gap-6 lg:grid-cols-3 lg:gap-8 lg:items-start">
         {/* A. Class Details */}
         <section
-          className="rounded-[12px] border border-primary/[0.06] bg-white p-6 shadow-[var(--shadow-card)] sm:p-7"
+          id="classes"
+          className="scroll-mt-[88px] rounded-[12px] border border-primary/[0.06] bg-white p-6 shadow-[var(--shadow-card)] sm:p-7"
           aria-labelledby="class-details-heading"
         >
           <h2
@@ -55,7 +58,8 @@ export function MusicLandingSections() {
 
         {/* B. Featured Programs */}
         <section
-          className="rounded-[12px] border border-primary/[0.06] bg-white p-6 shadow-[var(--shadow-card)] sm:p-7"
+          id="faculty"
+          className="scroll-mt-[88px] rounded-[12px] border border-primary/[0.06] bg-white p-6 shadow-[var(--shadow-card)] sm:p-7"
           aria-labelledby="featured-programs-heading"
         >
           <h2
@@ -80,7 +84,8 @@ export function MusicLandingSections() {
 
         {/* C. Student Spotlight */}
         <section
-          className="rounded-[12px] border border-primary/[0.06] bg-white p-6 shadow-[var(--shadow-card)] sm:p-7"
+          id="gallery"
+          className="scroll-mt-[88px] rounded-[12px] border border-primary/[0.06] bg-white p-6 shadow-[var(--shadow-card)] sm:p-7"
           aria-labelledby="student-spotlight-heading"
         >
           <h2
@@ -109,12 +114,12 @@ export function MusicLandingSections() {
       </div>
 
       <div className="mt-10 flex justify-center sm:mt-12">
-        <button
-          type="button"
+        <Link
+          to="/admissions#admission-form"
           className="inline-flex min-h-[52px] min-w-[240px] items-center justify-center rounded-[8px] bg-secondary px-8 text-base font-semibold text-primary shadow-[0_6px_24px_-4px_rgba(212,175,55,0.55)] transition hover:bg-secondary-hover"
         >
           Request a Trial Class
-        </button>
+        </Link>
       </div>
     </main>
   )

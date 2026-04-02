@@ -1,17 +1,35 @@
 @import 'tailwindcss';
+@import './styles/g10-landing.css';
+
+:root {
+  /* G10 AMR — exact reference tokens */
+  --primary-blue: #0b2a4a;
+  --primary-blue-dark: #081f36;
+  --gradient-start: #0b2a4a;
+  --gradient-end: #1c4e73;
+  --gold: #d4af37;
+  --gold-hover: #c19b2e;
+  --white: #ffffff;
+  --text-light: #e6eef5;
+
+  --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  --font-nav: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  --font-brand: 'Playfair Display', Georgia, Cambria, serif;
+}
 
 @theme {
   --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
   --font-brand: 'Playfair Display', Georgia, Cambria, serif;
 
-  --color-primary: #0b2a4a;
-  --color-primary-light: #123a5c;
-  --color-secondary: #d4af37;
-  --color-secondary-hover: #b9962f;
+  --color-primary: var(--primary-blue);
+  --color-primary-light: var(--gradient-end);
+  --color-secondary: var(--gold);
+  --color-secondary-hover: var(--gold-hover);
   --color-surface: #f4f6f8;
   --color-card: #ffffff;
 
-  --gradient-primary: linear-gradient(135deg, #123a5c 0%, #1e4f73 100%);
+  --gradient-primary: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
 
   --shadow-card: 0 6px 22px -8px rgba(11, 42, 74, 0.2), 0 2px 8px -3px rgba(11, 42, 74, 0.14);
   --shadow-soft: 0 10px 34px -10px rgba(11, 42, 74, 0.28);
