@@ -33,7 +33,7 @@ export function RoleSelection({ onSelect }: RoleSelectionProps) {
             <button
               type="button"
               onClick={() => onSelect(r.id)}
-              className="flex w-full items-center gap-4 rounded-[12px] border border-primary/[0.1] bg-surface/90 px-4 py-4 text-left shadow-[0_1px_0_rgba(15,47,79,0.04)] transition hover:border-secondary/50 hover:bg-white hover:shadow-[var(--shadow-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary"
+              className="flex w-full items-center gap-4 rounded-[12px] border border-primary/[0.1] bg-surface/90 px-4 py-4 text-left shadow-[0_1px_0_rgba(11,42,74,0.04)] transition hover:border-secondary/50 hover:bg-white hover:shadow-[var(--shadow-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary"
             >
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] bg-primary text-sm font-bold text-white">
                 {r.label.slice(0, 1)}

@@ -67,7 +67,7 @@ export function MusicLandingSections() {
           <ul className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
             {featuredPrograms.map((program) => (
               <li key={program}>
-                <span className="flex items-center justify-between gap-3 rounded-[12px] border border-primary/[0.07] bg-surface/80 px-4 py-3.5 text-sm font-medium text-primary shadow-[0_1px_0_rgba(15,47,79,0.04)]">
+                <span className="flex items-center justify-between gap-3 rounded-[12px] border border-primary/[0.07] bg-surface/80 px-4 py-3.5 text-sm font-medium text-primary shadow-[0_1px_0_rgba(11,42,74,0.06)]">
                   {program}
                   <span className="text-secondary" aria-hidden>
                     →
@@ -93,7 +93,7 @@ export function MusicLandingSections() {
             {testimonials.map((t) => (
               <blockquote
                 key={t.name}
-                className="rounded-[12px] border border-secondary/35 bg-secondary/90 p-4 shadow-[0_4px_16px_-6px_rgba(244,180,0,0.35)] sm:p-5"
+                className="rounded-[12px] border border-secondary/35 bg-secondary/90 p-4 shadow-[0_4px_16px_-6px_rgba(212,175,55,0.35)] sm:p-5"
               >
                 <p className="text-sm leading-relaxed text-primary/90">&ldquo;{t.quote}&rdquo;</p>
                 <footer className="mt-3 border-t border-primary/10 pt-3">
@@ -111,7 +111,7 @@ export function MusicLandingSections() {
       <div className="mt-10 flex justify-center sm:mt-12">
         <button
           type="button"
-          className="inline-flex min-h-[52px] min-w-[240px] items-center justify-center rounded-[12px] bg-secondary px-8 text-base font-semibold text-primary shadow-[0_6px_24px_-4px_rgba(244,180,0,0.55)] transition hover:bg-secondary-hover"
+          className="inline-flex min-h-[52px] min-w-[240px] items-center justify-center rounded-[8px] bg-secondary px-8 text-base font-semibold text-primary shadow-[0_6px_24px_-4px_rgba(212,175,55,0.55)] transition hover:bg-secondary-hover"
         >
           Request a Trial Class
         </button>

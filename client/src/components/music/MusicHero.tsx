@@ -7,30 +7,30 @@ const carouselItems = [
   {
     key: 'violin',
     title: 'Violin',
-    caption: 'Classical & contemporary strings',
+    caption: 'Child violin mentoring in a guided classroom',
     image:
-      'https://images.unsplash.com/photo-1614149162883-cec7f9e8e0c0?w=640&q=80&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=900&q=80&auto=format&fit=crop',
   },
   {
     key: 'drums',
     title: 'Drums',
-    caption: 'Rhythm, grooves & technique',
+    caption: 'Kid drum practice with instructor support',
     image:
-      'https://images.unsplash.com/photo-1519892300165-cb5582e4c7d2?w=640&q=80&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=900&q=80&auto=format&fit=crop',
   },
   {
     key: 'singing',
-    title: 'Singing',
-    caption: 'Voice training & performance',
+    title: 'Singing Group',
+    caption: 'Kids vocal group session and ensemble coaching',
     image:
-      'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=640&q=80&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=900&q=80&auto=format&fit=crop',
   },
   {
     key: 'keyboard',
-    title: 'Keyboard',
-    caption: 'Piano & keys foundation',
+    title: 'Keyboard / Piano',
+    caption: 'Hands-on piano class with teacher guidance',
     image:
-      'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=640&q=80&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=900&q=80&auto=format&fit=crop',
   },
 ] as const
 
@@ -62,9 +62,9 @@ export function MusicHero() {
         style={{ backgroundImage: `url(${STUDIO_BG})` }}
         aria-hidden
       />
-      <div className="pointer-events-none absolute inset-0 bg-primary/60 backdrop-blur-md" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 bg-primary/35 backdrop-blur-md" aria-hidden />
       <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#0f2f4f]/70 via-[#0f2f4f]/65 to-[#1f4e79]/85"
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(11,42,74,0.85),rgba(11,42,74,0.85))]"
         aria-hidden
       />
 
@@ -76,7 +76,7 @@ export function MusicHero() {
           >
             TRIVANDRAM&apos;S 1ST HOME STUDIO BASED MUSIC EDUCATION
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-pretty text-base leading-relaxed text-white/88 sm:text-lg">
+          <p className="mx-auto mt-5 max-w-2xl text-pretty text-base leading-relaxed text-[#E5E7EB] sm:text-lg">
             Private and small-group lessons in a dedicated home studio — patient instructors,
             structured progress, and a warm space where beginners and advancing musicians thrive.
           </p>
@@ -100,19 +100,19 @@ export function MusicHero() {
                     style={{ width: `${100 / len}%` }}
                     aria-hidden={carouselItems[index].key !== item.key}
                   >
-                    <figure className="overflow-hidden rounded-[12px] border border-white/20 bg-white shadow-[var(--shadow-card)]">
-                      <div className="aspect-[16/10] w-full overflow-hidden">
+                    <figure className="overflow-hidden rounded-[16px] border border-white/20 bg-white shadow-[var(--shadow-card)]">
+                      <div className="relative aspect-[16/10] w-full overflow-hidden">
                         <img
                           src={item.image}
-                          alt=""
+                          alt={`${item.title} classroom session`}
                           className="h-full w-full object-cover"
                           loading="lazy"
                         />
+                        <div className="absolute inset-x-0 bottom-0 bg-[linear-gradient(transparent,rgba(0,0,0,0.7))] px-4 pb-3 pt-10 text-left">
+                          <span className="block text-sm font-semibold text-white">{item.title}</span>
+                          <span className="block text-xs text-white/90">{item.caption}</span>
+                        </div>
                       </div>
-                      <figcaption className="border-t border-primary/[0.08] bg-white px-4 py-3 text-center sm:px-5 sm:py-3.5">
-                        <span className="block text-sm font-semibold text-primary">{item.title}</span>
-                        <span className="mt-0.5 block text-xs text-primary/60">{item.caption}</span>
-                      </figcaption>
                     </figure>
                   </div>
                 ))}

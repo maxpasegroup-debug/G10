@@ -25,7 +25,7 @@ const performanceColorMap: Record<PerformanceColor, string> = {
   Red: '#dc2626',
   Blue: '#2563eb',
   Green: '#16a34a',
-  Yellow: '#f4b400',
+  Yellow: '#D4AF37',
   Orange: '#f97316',
 }
 
@@ -203,7 +203,7 @@ export function TeacherAttendanceDashboard() {
                             onClick={() => updateStudent(student.id, { performance: colorName })}
                             className={`inline-flex h-8 w-8 items-center justify-center rounded-full border-2 transition ${
                               active
-                                ? 'scale-105 border-primary/35 shadow-[0_2px_10px_-3px_rgba(15,47,79,0.28)]'
+                                ? 'scale-105 border-primary/35 shadow-[0_2px_10px_-3px_rgba(11,42,74,0.28)]'
                                 : 'border-white/0 hover:scale-105'
                             }`}
                             style={{ backgroundColor: performanceColorMap[colorName] }}
@@ -240,7 +240,7 @@ export function TeacherAttendanceDashboard() {
         <button
           type="button"
           onClick={handleSave}
-          className="rounded-[12px] bg-secondary px-6 py-2.5 text-sm font-semibold text-primary shadow-[0_4px_16px_-4px_rgba(244,180,0,0.45)] transition hover:bg-secondary-hover"
+          className="rounded-[8px] bg-secondary px-6 py-2.5 text-sm font-semibold text-primary shadow-[0_4px_16px_-4px_rgba(212,175,55,0.45)] transition hover:bg-secondary-hover"
         >
           Save
         </button>

@@ -8,13 +8,13 @@ export function Sidebar() {
     >
       <div className="sticky top-24 space-y-5 rounded-[12px] bg-primary p-4 shadow-[var(--shadow-soft)]">
         <div className="rounded-[12px] bg-white p-5 shadow-[var(--shadow-card)]">
-          <h2 className="mb-1 text-base font-semibold text-secondary">Portal access</h2>
+          <h2 className="mb-1 text-base font-semibold text-secondary">Secure Login</h2>
           <p className="mb-4 text-sm leading-relaxed text-primary/70">
             Sign in to view grades, schedules, and school announcements.
           </p>
           <Link
             to="/login"
-            className="block w-full rounded-[12px] bg-secondary py-3 text-center text-sm font-semibold text-primary shadow-[0_6px_24px_-4px_rgba(244,180,0,0.55)] transition hover:bg-secondary-hover"
+            className="block w-full rounded-[8px] bg-primary py-3 text-center text-sm font-semibold text-white shadow-[var(--shadow-soft)] transition hover:bg-primary-light"
           >
             Go to login
           </Link>

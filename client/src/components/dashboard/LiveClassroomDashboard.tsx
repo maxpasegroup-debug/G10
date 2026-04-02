@@ -107,7 +107,7 @@ export function LiveClassroomDashboard() {
 
           <button
             type="button"
-            className="h-11 self-end rounded-[12px] bg-secondary px-5 text-sm font-semibold text-primary shadow-[0_4px_16px_-4px_rgba(244,180,0,0.45)] transition hover:bg-secondary-hover"
+            className="h-11 self-end rounded-[8px] bg-secondary px-5 text-sm font-semibold text-primary shadow-[0_4px_16px_-4px_rgba(212,175,55,0.45)] transition hover:bg-secondary-hover"
           >
             View Live
           </button>

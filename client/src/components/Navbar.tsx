@@ -19,32 +19,28 @@ export function Navbar() {
       className="fixed top-0 right-0 left-0 z-50 border-b border-white/15 bg-primary shadow-[0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md backdrop-saturate-150"
       role="banner"
     >
-      <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-4 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-18 max-w-[1400px] items-center gap-4 px-4 sm:px-6 lg:px-8">
         <Link
           to="/"
           className="flex shrink-0 items-center gap-2.5 text-white no-underline"
           onClick={() => setOpen(false)}
         >
-          <span
-            className="flex h-9 min-w-9 items-center justify-center rounded-[12px] border border-secondary/30 bg-primary px-2 text-xs font-semibold text-secondary shadow-[var(--shadow-soft)]"
-            aria-hidden
-          >
-            G10
+          <span className="leading-none text-secondary" aria-hidden>
+            <span className="block font-[var(--font-brand)] text-lg tracking-[0.14em]">G10</span>
+            <span className="mt-0.5 block font-[var(--font-brand)] text-sm tracking-[0.24em]">AMR</span>
           </span>
-          <span className="font-[var(--font-brand)] text-lg tracking-wide text-secondary">
-            G10 AMR
-          </span>
+          <span className="sr-only">G10 AMR</span>
         </Link>
 
         <nav
-          className="hidden min-w-0 flex-1 items-center justify-center gap-1 md:flex lg:gap-2"
+          className="hidden min-w-0 flex-1 items-center justify-evenly gap-2 md:flex"
           aria-label="Main"
         >
           {navItems.map((item) => (
             <a
               key={item.href}
               href={item.href}
-              className="rounded-[10px] px-3 py-2 text-sm font-medium text-white/85 transition-colors hover:bg-white/10 hover:text-secondary"
+              className="flex-1 rounded-[10px] px-2 py-2 text-center text-sm font-medium text-white/85 transition-colors hover:bg-white/10 hover:text-secondary"
             >
               {item.label}
             </a>
@@ -54,7 +50,7 @@ export function Navbar() {
         <div className="ml-auto flex shrink-0 items-center gap-3">
           <Link
             to="/login"
-            className="inline-flex h-10 items-center justify-center rounded-[12px] bg-secondary px-4 text-sm font-semibold text-primary shadow-[0_2px_12px_-2px_rgba(244,180,0,0.45)] transition hover:bg-secondary-hover md:px-5"
+            className="inline-flex h-10 items-center justify-center rounded-[8px] bg-secondary px-4 text-sm font-semibold text-primary shadow-[0_2px_12px_-2px_rgba(212,175,55,0.45)] transition hover:bg-secondary-hover md:px-5"
           >
             Student &amp; Parent Login
           </Link>

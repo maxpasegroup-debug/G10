@@ -34,7 +34,7 @@ const bandColors: Record<PerformanceBand, string> = {
   'Needs Improvement': '#dc2626',
   'Perfect Timing': '#2563eb',
   'Good Performance': '#16a34a',
-  'Special Performance': '#f4b400',
+  'Special Performance': '#D4AF37',
   'OK Performance': '#f97316',
 }
 
@@ -44,7 +44,7 @@ function colorForPerformanceLevel(value: number): string {
   if (value < 70) return '#f97316'
   if (value < 80) return '#16a34a'
   if (value < 90) return '#2563eb'
-  return '#f4b400'
+  return '#D4AF37'
 }
 
 const students: Student[] = [
@@ -132,7 +132,7 @@ export function PerformanceDashboard() {
                 onClick={() => setActiveSubject(subject)}
                 className={`rounded-[12px] border px-4 py-2 text-sm font-semibold transition ${
                   active
-                    ? 'border-secondary bg-secondary/15 text-primary shadow-[0_4px_14px_-6px_rgba(244,180,0,0.55)]'
+                    ? 'border-secondary bg-secondary/15 text-primary shadow-[0_4px_14px_-6px_rgba(212,175,55,0.55)]'
                     : 'border-primary/[0.12] bg-white text-primary/75 hover:bg-primary/[0.04]'
                 }`}
               >
@@ -232,16 +232,16 @@ function WeeklyPerformanceChart({ values }: { values: number[] }) {
         <LineChart data={data} margin={{ top: 6, right: 4, left: -18, bottom: 0 }}>
           <XAxis
             dataKey="week"
-            tick={{ fontSize: 10, fill: 'rgba(15, 47, 79, 0.45)' }}
+            tick={{ fontSize: 10, fill: 'rgba(11, 42, 74, 0.45)' }}
             tickLine={false}
-            axisLine={{ stroke: 'rgba(15, 47, 79, 0.12)' }}
+            axisLine={{ stroke: 'rgba(11, 42, 74, 0.12)' }}
             interval={0}
           />
           <YAxis
             domain={[0, 100]}
             ticks={[0, 50, 100]}
             width={28}
-            tick={{ fontSize: 10, fill: 'rgba(15, 47, 79, 0.45)' }}
+            tick={{ fontSize: 10, fill: 'rgba(11, 42, 74, 0.45)' }}
             tickLine={false}
             axisLine={false}
           />

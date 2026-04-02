@@ -186,7 +186,7 @@ export function LoginForm({ role, onChangeRole, onLoginSuccess }: LoginFormProps
               autoComplete="username"
               value={emailOrMobile}
               onChange={(e) => setEmailOrMobile(e.target.value)}
-              className="w-full rounded-[12px] border border-primary/[0.12] bg-white px-4 py-3 text-sm text-primary shadow-[inset_0_1px_2px_rgba(15,47,79,0.04)] outline-none transition placeholder:text-primary/35 focus:border-primary/35 focus:ring-2 focus:ring-secondary/40"
+              className="w-full rounded-[12px] border border-primary/[0.12] bg-white px-4 py-3 text-sm text-primary shadow-[inset_0_1px_2px_rgba(11,42,74,0.04)] outline-none transition placeholder:text-primary/35 focus:border-primary/35 focus:ring-2 focus:ring-secondary/40"
               placeholder="you@school.edu or +91 …"
               required
             />
@@ -202,7 +202,7 @@ export function LoginForm({ role, onChangeRole, onLoginSuccess }: LoginFormProps
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-[12px] border border-primary/[0.12] bg-white px-4 py-3 text-sm text-primary shadow-[inset_0_1px_2px_rgba(15,47,79,0.04)] outline-none transition placeholder:text-primary/35 focus:border-primary/35 focus:ring-2 focus:ring-secondary/40"
+              className="w-full rounded-[12px] border border-primary/[0.12] bg-white px-4 py-3 text-sm text-primary shadow-[inset_0_1px_2px_rgba(11,42,74,0.04)] outline-none transition placeholder:text-primary/35 focus:border-primary/35 focus:ring-2 focus:ring-secondary/40"
               placeholder="••••••••"
               required
             />
@@ -220,7 +220,7 @@ export function LoginForm({ role, onChangeRole, onLoginSuccess }: LoginFormProps
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-[12px] bg-secondary py-3.5 text-sm font-semibold text-primary shadow-[0_4px_16px_-4px_rgba(244,180,0,0.45)] transition hover:bg-secondary-hover disabled:opacity-60"
+            className="w-full rounded-[8px] bg-secondary py-3.5 text-sm font-semibold text-primary shadow-[0_4px_16px_-4px_rgba(212,175,55,0.45)] transition hover:bg-secondary-hover disabled:opacity-60"
           >
             {loading ? 'Signing in…' : 'Login'}
           </button>
@@ -238,7 +238,7 @@ export function LoginForm({ role, onChangeRole, onLoginSuccess }: LoginFormProps
               autoComplete="username"
               value={emailOrMobile}
               onChange={(e) => setEmailOrMobile(e.target.value)}
-              className="w-full rounded-[12px] border border-primary/[0.12] bg-white px-4 py-3 text-sm text-primary shadow-[inset_0_1px_2px_rgba(15,47,79,0.04)] outline-none transition placeholder:text-primary/35 focus:border-primary/35 focus:ring-2 focus:ring-secondary/40"
+              className="w-full rounded-[12px] border border-primary/[0.12] bg-white px-4 py-3 text-sm text-primary shadow-[inset_0_1px_2px_rgba(11,42,74,0.04)] outline-none transition placeholder:text-primary/35 focus:border-primary/35 focus:ring-2 focus:ring-secondary/40"
               placeholder="you@school.edu or +91 …"
               required
             />
@@ -256,7 +256,7 @@ export function LoginForm({ role, onChangeRole, onLoginSuccess }: LoginFormProps
                 autoComplete="one-time-code"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
-                className="w-full rounded-[12px] border border-primary/[0.12] bg-white px-4 py-3 text-sm text-primary shadow-[inset_0_1px_2px_rgba(15,47,79,0.04)] outline-none transition placeholder:text-primary/35 focus:border-primary/35 focus:ring-2 focus:ring-secondary/40"
+                className="w-full rounded-[12px] border border-primary/[0.12] bg-white px-4 py-3 text-sm text-primary shadow-[inset_0_1px_2px_rgba(11,42,74,0.04)] outline-none transition placeholder:text-primary/35 focus:border-primary/35 focus:ring-2 focus:ring-secondary/40"
                 placeholder="6-digit code"
                 required
               />
@@ -274,7 +274,7 @@ export function LoginForm({ role, onChangeRole, onLoginSuccess }: LoginFormProps
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-[12px] bg-secondary py-3.5 text-sm font-semibold text-primary shadow-[0_4px_16px_-4px_rgba(244,180,0,0.45)] transition hover:bg-secondary-hover disabled:opacity-60"
+            className="w-full rounded-[8px] bg-secondary py-3.5 text-sm font-semibold text-primary shadow-[0_4px_16px_-4px_rgba(212,175,55,0.45)] transition hover:bg-secondary-hover disabled:opacity-60"
           >
             {loading ? 'Verifying…' : 'Login'}
           </button>
