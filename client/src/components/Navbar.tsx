@@ -77,7 +77,7 @@ export function Navbar() {
           ])}
         </nav>
 
-        <Link to="/login" className="g10-navbar__cta">
+        <Link to="/login" className="student-login-btn g10-navbar__cta">
           Student &amp; Parent Login
         </Link>
 
@@ -113,7 +113,7 @@ export function Navbar() {
         ))}
         <Link
           to="/login"
-          className="g10-navbar__cta g10-navbar__cta--mobile"
+          className="student-login-btn g10-navbar__cta g10-navbar__cta--mobile"
           onClick={() => setOpen(false)}
         >
           Student &amp; Parent Login
