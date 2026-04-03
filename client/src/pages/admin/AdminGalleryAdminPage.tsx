@@ -69,7 +69,6 @@ export function AdminGalleryAdminPage() {
       return
     }
     setError(null)
-    setSubmitting.true
     setSubmitting(true)
     try {
       const fd = new FormData()

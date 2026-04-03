@@ -72,7 +72,7 @@ export function AdminPerformancePage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [studentId, setStudentId] = useState('')
-  const [subjectId, setSubjectId] = useState(subjects[0]?.id ?? '')
+  const [subjectId, setSubjectId] = useState<string>(subjects[0]?.id ?? '')
   const [band, setBand] = useState<PerformanceBand | null>(null)
   const [remark, setRemark] = useState('')
   const [savedHint, setSavedHint] = useState<string | null>(null)
@@ -138,7 +138,7 @@ export function AdminPerformancePage() {
     if (!student || !subject || band == null || !API_URL) return
     setSaving(true)
     setSavedHint(null)
-    setError(null)
+    setSaveError(null)
     try {
       const score = `${bandToScore[band]} · ${subject.name}`
       const res = await fetch(apiUrl('/api/performance'), {

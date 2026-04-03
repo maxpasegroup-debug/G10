@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Navbar } from '../components/Navbar'
 import { PageHero } from '../components/PageHero'
 import { PublicFooter } from '../components/PublicFooter'
+import { API_URL, apiUrl, resolveMediaUrl } from '../lib/api'
 
 type GalleryCategory = 'classes' | 'performances' | 'studio'
 
@@ -125,23 +126,63 @@ export function GalleryPage() {
   const [activeFilter, setActiveFilter] = useState<(typeof filterTabs)[number]['key']>('all')
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [lightboxId, setLightboxId] = useState<string | null>(null)
+  const [displayItems, setDisplayItems] = useState<GalleryItem[]>(galleryItems)
+  const [galleryNotice, setGalleryNotice] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!API_URL) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch(apiUrl('/api/gallery'))
+        const body = (await res.json()) as {
+          success?: boolean
+          data?: { id: number; image_url: string; caption: string; category: string }[]
+        }
+        if (!res.ok || !body.success || !Array.isArray(body.data)) {
+          throw new Error('bad response')
+        }
+        if (cancelled) return
+        if (body.data.length === 0) {
+          setDisplayItems([])
+          setGalleryNotice(null)
+          return
+        }
+        setGalleryNotice(null)
+        setDisplayItems(
+          body.data.map((r) => ({
+            id: String(r.id),
+            src: resolveMediaUrl(r.image_url),
+            category: r.category as GalleryCategory,
+            caption: r.caption || 'Photo',
+          })),
+        )
+      } catch {
+        if (!cancelled) {
+          setDisplayItems(galleryItems)
+          setGalleryNotice('Showing sample photos (could not load live gallery).')
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const filtered = useMemo(() => {
-    if (activeFilter === 'all') return galleryItems
-    return galleryItems.filter((item) => item.category === activeFilter)
-  }, [activeFilter])
+    if (activeFilter === 'all') return displayItems
+    return displayItems.filter((item) => item.category === activeFilter)
+  }, [activeFilter, displayItems])
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE)
     setLightboxId((id) => {
       if (!id) return null
       const next =
-        activeFilter === 'all'
-          ? galleryItems
-          : galleryItems.filter((item) => item.category === activeFilter)
+        activeFilter === 'all' ? displayItems : displayItems.filter((item) => item.category === activeFilter)
       return next.some((item) => item.id === id) ? id : null
     })
-  }, [activeFilter])
+  }, [activeFilter, displayItems])
 
   const visibleItems = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount])
 
@@ -192,6 +233,11 @@ export function GalleryPage() {
 
         <section className="px-4 py-10 sm:px-6 md:px-[60px] md:py-[60px]">
           <div className="mx-auto max-w-[1400px]">
+            {galleryNotice ? (
+              <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+                {galleryNotice}
+              </p>
+            ) : null}
             <div
               className="flex flex-wrap justify-center gap-3 md:justify-start"
               role="tablist"
@@ -218,30 +264,36 @@ export function GalleryPage() {
               })}
             </div>
 
-            <div className="mt-10 columns-2 gap-4 sm:columns-3 xl:columns-4">
-              {visibleItems.map((item, idx) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className="group mb-4 w-full cursor-zoom-in break-inside-avoid rounded-xl bg-white text-left shadow-[var(--shadow-card)] outline-none focus-visible:ring-2 focus-visible:ring-secondary"
-                  onClick={() => setLightboxId(item.id)}
-                >
-                  <span className="relative block overflow-hidden rounded-xl">
-                    <img
-                      src={item.src}
-                      alt=""
-                      className={`w-full object-cover transition duration-300 ease-out group-hover:scale-105 ${
-                        idx % 4 === 0 ? 'h-[260px] sm:h-[280px]' : 'h-[200px] sm:h-[220px]'
-                      }`}
-                      loading="lazy"
-                    />
-                    <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-3 pb-2.5 pt-10">
-                      <span className="text-sm font-medium text-white">{item.caption}</span>
+            {filtered.length === 0 ? (
+              <p className="mt-10 py-12 text-center text-sm text-primary/55">
+                {API_URL ? 'No photos here yet. Check back soon.' : 'No photos in this category.'}
+              </p>
+            ) : (
+              <div className="mt-10 columns-2 gap-4 sm:columns-3 xl:columns-4">
+                {visibleItems.map((item, idx) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className="group mb-4 w-full cursor-zoom-in break-inside-avoid rounded-xl bg-white text-left shadow-[var(--shadow-card)] outline-none focus-visible:ring-2 focus-visible:ring-secondary"
+                    onClick={() => setLightboxId(item.id)}
+                  >
+                    <span className="relative block overflow-hidden rounded-xl">
+                      <img
+                        src={item.src}
+                        alt=""
+                        className={`w-full object-cover transition duration-300 ease-out group-hover:scale-105 ${
+                          idx % 4 === 0 ? 'h-[260px] sm:h-[280px]' : 'h-[200px] sm:h-[220px]'
+                        }`}
+                        loading="lazy"
+                      />
+                      <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-3 pb-2.5 pt-10">
+                        <span className="text-sm font-medium text-white">{item.caption}</span>
+                      </span>
                     </span>
-                  </span>
-                </button>
-              ))}
-            </div>
+                  </button>
+                ))}
+              </div>
+            )}
 
             {visibleCount < filtered.length ? (
               <div className="mt-10 flex justify-center">

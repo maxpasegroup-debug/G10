@@ -40,11 +40,11 @@ export function AdminStudentsPage() {
 
   const load = useCallback(async () => {
     if (!API_URL) {
-      setError('VITE_API_URL is not set')
+      setListError('VITE_API_URL is not set')
       setStudents([])
       return
     }
-    setError(null)
+    setListError(null)
     const [sRes, cRes] = await Promise.all([
       fetch(apiUrl('/api/students'), { headers: authHeaders() }),
       fetch(apiUrl('/api/classes'), { headers: authHeaders() }),
@@ -164,8 +164,8 @@ export function AdminStudentsPage() {
 
   return (
     <div className="space-y-6">
-      {error ? (
-        <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
+      {listError ? (
+        <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{listError}</p>
       ) : null}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-lg text-primary/70">{students.length} students</p>

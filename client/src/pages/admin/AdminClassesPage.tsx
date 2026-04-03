@@ -34,11 +34,11 @@ export function AdminClassesPage() {
 
   const load = useCallback(async () => {
     if (!API_URL) {
-      setError('VITE_API_URL is not set')
+      setListError('VITE_API_URL is not set')
       setClasses([])
       return
     }
-    setError(null)
+    setListError(null)
     const res = await fetch(apiUrl('/api/classes'), { headers: authHeaders() })
     const data = await readJson<ClassRow[]>(res)
     setClasses(data)

@@ -4,6 +4,7 @@ import { Navbar } from '../components/Navbar'
 import { PageHero } from '../components/PageHero'
 import { PublicFooter } from '../components/PublicFooter'
 import { useSiteSettings } from '../context/SettingsContext'
+import { API_URL, apiUrl } from '../lib/api'
 
 const courses = [
   { id: 'piano', title: 'Piano', image: '/images/hero-keyboard.jpg' },
@@ -29,6 +30,8 @@ export function AdmissionsPage() {
   const [course, setCourse] = useState<string>('Piano')
   const [age, setAge] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   useEffect(() => {
     if (location.hash !== '#admission-form') return
@@ -43,9 +46,33 @@ export function AdmissionsPage() {
     document.getElementById('admission-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [])
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    setSubmitted(true)
+    setSubmitError(null)
+    if (!API_URL) {
+      setSubmitError('This form requires the API (set VITE_API_URL).')
+      return
+    }
+    setSubmitting(true)
+    try {
+      const res = await fetch(apiUrl('/api/enquiries'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          phone: phone.trim(),
+          course,
+          age: age.trim() || null,
+        }),
+      })
+      const body = (await res.json()) as { success?: boolean; error?: string }
+      if (!res.ok) throw new Error(body.error || 'Could not submit enquiry')
+      setSubmitted(true)
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Could not submit enquiry')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -158,7 +185,12 @@ export function AdmissionsPage() {
                   Thank you! We&apos;ll call you shortly.
                 </p>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form onSubmit={(e) => void handleSubmit(e)} className="space-y-5">
+                  {submitError ? (
+                    <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+                      {submitError}
+                    </p>
+                  ) : null}
                   <div>
                     <label htmlFor="adm-name" className="mb-2 block text-sm font-semibold text-primary">
                       Name
@@ -187,7 +219,8 @@ export function AdmissionsPage() {
                       required
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="w-full rounded-xl border border-primary/[0.12] bg-white px-4 py-3.5 text-base text-primary outline-none ring-secondary/30 transition focus:ring-2"
+                      disabled={submitting}
+                      className="w-full rounded-xl border border-primary/[0.12] bg-white px-4 py-3.5 text-base text-primary outline-none ring-secondary/30 transition focus:ring-2 disabled:opacity-60"
                       placeholder="+91 …"
                     />
                   </div>
@@ -201,7 +234,8 @@ export function AdmissionsPage() {
                       required
                       value={course}
                       onChange={(e) => setCourse(e.target.value)}
-                      className="w-full rounded-xl border border-primary/[0.12] bg-white px-4 py-3.5 text-base text-primary outline-none ring-secondary/30 transition focus:ring-2"
+                      disabled={submitting}
+                      className="w-full rounded-xl border border-primary/[0.12] bg-white px-4 py-3.5 text-base text-primary outline-none ring-secondary/30 transition focus:ring-2 disabled:opacity-60"
                     >
                       {courseOptions.map((opt) => (
                         <option key={opt} value={opt}>
@@ -222,15 +256,17 @@ export function AdmissionsPage() {
                       max={99}
                       value={age}
                       onChange={(e) => setAge(e.target.value)}
-                      className="w-full rounded-xl border border-primary/[0.12] bg-white px-4 py-3.5 text-base text-primary outline-none ring-secondary/30 transition focus:ring-2"
+                      disabled={submitting}
+                      className="w-full rounded-xl border border-primary/[0.12] bg-white px-4 py-3.5 text-base text-primary outline-none ring-secondary/30 transition focus:ring-2 disabled:opacity-60"
                       placeholder="e.g. 10"
                     />
                   </div>
                   <button
                     type="submit"
-                    className="w-full rounded-xl bg-secondary py-4 text-base font-bold text-primary shadow-[0_4px_12px_rgba(212,175,55,0.35)] transition hover:bg-secondary-hover"
+                    disabled={submitting}
+                    className="w-full rounded-xl bg-secondary py-4 text-base font-bold text-primary shadow-[0_4px_12px_rgba(212,175,55,0.35)] transition hover:bg-secondary-hover disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    Request a Call
+                    {submitting ? 'Sending…' : 'Request a Call'}
                   </button>
                 </form>
               )}

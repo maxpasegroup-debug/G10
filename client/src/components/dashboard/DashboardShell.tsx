@@ -68,7 +68,7 @@ type SmartAlert = {
   tone: AlertTone
 }
 
-export function DashboardShell({ role }: DashboardShellProps) {
+export function DashboardShell({ role, studentId, classId }: DashboardShellProps) {
   const [active, setActive] = useState<MenuKey>('attendance')
   const [toastIds, setToastIds] = useState<string[]>([])
 

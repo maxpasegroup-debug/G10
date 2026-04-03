@@ -98,10 +98,13 @@ export function AdminAttendancePage() {
     if (!classId) return
     let cancelled = false
     async function run() {
+      setRosterLoading(true)
       try {
         await loadRoster(classId, date)
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Could not load roster')
+      } finally {
+        if (!cancelled) setRosterLoading(false)
       }
     }
     void run()
@@ -214,7 +217,8 @@ export function AdminAttendancePage() {
             type="date"
             value={date}
             onChange={(e) => onDateChange(e.target.value)}
-            className="w-full min-h-[52px] rounded-xl border border-primary/[0.12] bg-white px-4 text-base text-primary outline-none ring-secondary/30 focus:ring-2"
+            disabled={rosterBusy}
+            className="w-full min-h-[52px] rounded-xl border border-primary/[0.12] bg-white px-4 text-base text-primary outline-none ring-secondary/30 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
           />
         </div>
       </div>
