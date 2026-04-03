@@ -1,20 +1,34 @@
-import { useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { Navbar } from '../components/Navbar'
 import { PageHero } from '../components/PageHero'
-
-/** Replace with your real number (digits only, country code included for wa.me). */
-const PHONE_E164 = '919876543210'
-const PHONE_DISPLAY = '+91 98765 43210'
-const PHONE_TEL = `tel:+${PHONE_E164}`
-const WHATSAPP_HREF = `https://wa.me/${PHONE_E164}?text=${encodeURIComponent('Hi G10 AMR — I’d like to know more about classes.')}`
-const EMAIL = 'admissions@g10amr.edu'
-const ADDRESS_LINE = 'Home studio, Trivandrum, Kerala'
+import { PublicFooter } from '../components/PublicFooter'
+import { useSiteSettings } from '../context/SettingsContext'
+import { telHref, whatsappHref } from '../lib/phone'
 
 export function ContactPage() {
+  const { settings, loading } = useSiteSettings()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [message, setMessage] = useState('')
   const [sent, setSent] = useState(false)
+
+  const displayPhone = settings?.phone ?? ''
+  const email = settings?.email ?? ''
+  const address = settings?.address ?? ''
+  const mapEmbed = settings?.map_embed_url ?? ''
+  const academyName = settings?.academy_name ?? ''
+
+  const phoneTel = useMemo(() => telHref(displayPhone), [displayPhone])
+  const whatsappHrefFull = useMemo(
+    () =>
+      whatsappHref(
+        displayPhone,
+        academyName
+          ? `Hi ${academyName} — I'd like to know more about classes.`
+          : "Hi — I'd like to know more about classes.",
+      ),
+    [displayPhone, academyName],
+  )
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -25,13 +39,13 @@ export function ContactPage() {
     <div className="min-h-dvh bg-surface font-sans text-primary">
       <Navbar />
       <main>
-        <PageHero title="Contact Us" subtitle="We’re here to help you get started" />
+        <PageHero title="Contact Us" subtitle="We're here to help you get started" />
 
         <section className="px-4 py-10 sm:px-6 md:px-[60px] md:py-14">
           <div className="mx-auto grid max-w-[1000px] gap-6 md:grid-cols-3">
             <a
-              href={PHONE_TEL}
-              className="flex flex-col items-center gap-3 rounded-2xl border border-primary/[0.08] bg-white p-6 text-center shadow-[var(--shadow-card)] transition hover:border-secondary/40 hover:shadow-[var(--shadow-soft)]"
+              href={displayPhone ? phoneTel : undefined}
+              className={`flex flex-col items-center gap-3 rounded-2xl border border-primary/[0.08] bg-white p-6 text-center shadow-[var(--shadow-card)] transition hover:border-secondary/40 hover:shadow-[var(--shadow-soft)] ${!displayPhone ? 'pointer-events-none opacity-60' : ''}`}
             >
               <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary/20 text-secondary">
                 <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
@@ -43,15 +57,17 @@ export function ContactPage() {
                 </svg>
               </span>
               <span className="text-xs font-semibold uppercase tracking-wide text-primary/50">Call us</span>
-              <span className="text-xl font-bold text-primary md:text-2xl">{PHONE_DISPLAY}</span>
+              <span className="text-xl font-bold text-primary md:text-2xl">
+                {loading && !displayPhone ? '…' : displayPhone || '—'}
+              </span>
               <span className="text-sm font-medium text-secondary">Tap to call</span>
             </a>
 
             <a
-              href={WHATSAPP_HREF}
+              href={displayPhone ? whatsappHrefFull : undefined}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex flex-col items-center gap-3 rounded-2xl border-2 border-[#25D366]/50 bg-white p-6 text-center shadow-[var(--shadow-card)] transition hover:border-[#25D366] hover:shadow-[var(--shadow-soft)]"
+              className={`flex flex-col items-center gap-3 rounded-2xl border-2 border-[#25D366]/50 bg-white p-6 text-center shadow-[var(--shadow-card)] transition hover:border-[#25D366] hover:shadow-[var(--shadow-soft)] ${!displayPhone ? 'pointer-events-none opacity-60' : ''}`}
             >
               <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#25D366]/15 text-[#25D366]">
                 <svg className="h-8 w-8" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -64,8 +80,8 @@ export function ContactPage() {
             </a>
 
             <a
-              href={`mailto:${EMAIL}`}
-              className="flex flex-col items-center gap-3 rounded-2xl border border-primary/[0.08] bg-white p-6 text-center shadow-[var(--shadow-card)] transition hover:border-secondary/40 hover:shadow-[var(--shadow-soft)]"
+              href={email ? `mailto:${email}` : undefined}
+              className={`flex flex-col items-center gap-3 rounded-2xl border border-primary/[0.08] bg-white p-6 text-center shadow-[var(--shadow-card)] transition hover:border-secondary/40 hover:shadow-[var(--shadow-soft)] ${!email ? 'pointer-events-none opacity-60' : ''}`}
             >
               <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/[0.08] text-primary">
                 <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
@@ -77,7 +93,9 @@ export function ContactPage() {
                 </svg>
               </span>
               <span className="text-xs font-semibold uppercase tracking-wide text-primary/50">Email</span>
-              <span className="break-all text-base font-semibold text-primary md:text-lg">{EMAIL}</span>
+              <span className="break-all text-base font-semibold text-primary md:text-lg">
+                {loading && !email ? '…' : email || '—'}
+              </span>
               <span className="text-sm font-medium text-secondary">Send an email</span>
             </a>
           </div>
@@ -154,31 +172,40 @@ export function ContactPage() {
         <section className="px-4 pb-16 sm:px-6 md:px-[60px]">
           <div className="mx-auto max-w-[900px]">
             <h2 className="mb-4 text-center text-lg font-bold text-primary md:text-xl">Visit us</h2>
-            <p className="mb-6 text-center text-base text-primary/75">{ADDRESS_LINE}</p>
-            <div className="overflow-hidden rounded-2xl shadow-[var(--shadow-card)]">
-              <iframe
-                title="G10 AMR location — Trivandrum"
-                src="https://maps.google.com/maps?q=Thiruvananthapuram%2C%20Kerala&t=m&z=12&output=embed&iwloc=near"
-                className="h-[280px] w-full border-0 md:h-[320px]"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
-            </div>
+            <p className="mb-6 text-center text-base text-primary/75">
+              {loading && !address ? '…' : address || '—'}
+            </p>
+            {mapEmbed ? (
+              <div className="overflow-hidden rounded-2xl shadow-[var(--shadow-card)]">
+                <iframe
+                  title={academyName ? `${academyName} location` : 'Location map'}
+                  src={mapEmbed}
+                  className="h-[280px] w-full border-0 md:h-[320px]"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+            ) : null}
           </div>
         </section>
 
         <section className="bg-primary px-4 py-[60px] sm:px-6 md:px-[60px]">
           <div className="mx-auto max-w-[640px] text-center">
             <h2 className="text-xl font-bold text-white md:text-2xl">Talk to us and start your journey</h2>
-            <a
-              href={PHONE_TEL}
-              className="mt-6 inline-flex min-h-[52px] min-w-[200px] items-center justify-center rounded-[8px] bg-secondary px-8 text-base font-bold text-primary shadow-[0_4px_12px_rgba(212,175,55,0.35)] transition hover:bg-secondary-hover"
-            >
-              Call Now
-            </a>
+            {displayPhone ? (
+              <a
+                href={phoneTel}
+                className="mt-6 inline-flex min-h-[52px] min-w-[200px] items-center justify-center rounded-[8px] bg-secondary px-8 text-base font-bold text-primary shadow-[0_4px_12px_rgba(212,175,55,0.35)] transition hover:bg-secondary-hover"
+              >
+                Call Now
+              </a>
+            ) : (
+              <p className="mt-6 text-sm text-white/70">{loading ? '…' : 'Phone number not configured.'}</p>
+            )}
           </div>
         </section>
       </main>
+      <PublicFooter />
     </div>
   )
 }

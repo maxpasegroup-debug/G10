@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Line,
   LineChart,
@@ -7,8 +7,8 @@ import {
   YAxis,
 } from 'recharts'
 import type { DotProps } from 'recharts'
-
-type Subject = 'Keyboard' | 'Guitar' | 'Vocal' | 'Drums'
+import { authHeaders } from '../../auth/authService'
+import { API_URL, apiUrl } from '../../lib/api'
 
 type PerformanceBand =
   | 'Needs Improvement'
@@ -17,25 +17,40 @@ type PerformanceBand =
   | 'Special Performance'
   | 'OK Performance'
 
-type Student = {
-  id: string
-  name: string
-  photo: string
-  attendance: number
-  score: number
-  band: PerformanceBand
-  trend: number[]
-  subject: Subject
-}
-
-const subjects: Subject[] = ['Keyboard', 'Guitar', 'Vocal', 'Drums']
-
 const bandColors: Record<PerformanceBand, string> = {
   'Needs Improvement': '#dc2626',
   'Perfect Timing': '#2563eb',
   'Good Performance': '#16a34a',
   'Special Performance': '#D4AF37',
   'OK Performance': '#f97316',
+}
+
+type PerformanceRow = {
+  id: number
+  student_id: number
+  score: string
+  remarks: string | null
+  created_at: string
+}
+
+type AttendanceRow = {
+  id: number
+  student_id: number
+  date: string
+  status: string
+}
+
+type StudentApi = {
+  id: number
+  name: string | null
+  photo: string | null
+  subject: string | null
+  class_id: number | null
+}
+
+type Props = {
+  studentId?: number
+  classId?: number
 }
 
 /** Maps weekly performance value → point color (5-band scale). */
@@ -47,141 +62,215 @@ function colorForPerformanceLevel(value: number): string {
   return '#D4AF37'
 }
 
-const students: Student[] = [
-  {
-    id: 's1',
-    name: 'Aarav Nair',
-    photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=180&q=80&auto=format&fit=crop',
-    attendance: 97,
-    score: 92,
-    band: 'Perfect Timing',
-    trend: [72, 78, 80, 86, 89, 92],
-    subject: 'Keyboard',
-  },
-  {
-    id: 's2',
-    name: 'Diya Menon',
-    photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=180&q=80&auto=format&fit=crop',
-    attendance: 94,
-    score: 86,
-    band: 'Good Performance',
-    trend: [62, 68, 73, 78, 82, 86],
-    subject: 'Guitar',
-  },
-  {
-    id: 's3',
-    name: 'Neha Paul',
-    photo: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=180&q=80&auto=format&fit=crop',
-    attendance: 89,
-    score: 79,
-    band: 'OK Performance',
-    trend: [70, 69, 72, 74, 77, 79],
-    subject: 'Vocal',
-  },
-  {
-    id: 's4',
-    name: 'Kiran Das',
-    photo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=180&q=80&auto=format&fit=crop',
-    attendance: 82,
-    score: 65,
-    band: 'Needs Improvement',
-    trend: [74, 71, 69, 68, 66, 65],
-    subject: 'Drums',
-  },
-  {
-    id: 's5',
-    name: 'Maya George',
-    photo: 'https://images.unsplash.com/photo-1542206395-9feb3edaa68d?w=180&q=80&auto=format&fit=crop',
-    attendance: 98,
-    score: 95,
-    band: 'Special Performance',
-    trend: [78, 82, 86, 90, 93, 95],
-    subject: 'Keyboard',
-  },
-  {
-    id: 's6',
-    name: 'Rohan Babu',
-    photo: 'https://images.unsplash.com/photo-1521119989659-a83eee488004?w=180&q=80&auto=format&fit=crop',
-    attendance: 93,
-    score: 84,
-    band: 'Good Performance',
-    trend: [60, 64, 71, 76, 81, 84],
-    subject: 'Drums',
-  },
-]
+function scoreTextToNumeric(score: string): number {
+  const n = Number.parseInt(String(score).trim(), 10)
+  if (!Number.isNaN(n)) return Math.min(100, Math.max(0, n))
+  const lower = String(score).trim().toLowerCase()
+  if (lower.includes('red') || lower.includes('needs')) return 55
+  if (lower.includes('orange') || lower.includes('ok')) return 65
+  if (lower.includes('green') || lower.includes('good')) return 75
+  if (lower.includes('blue') || lower.includes('perfect')) return 85
+  if (lower.includes('yellow') || lower.includes('special')) return 95
+  return 70
+}
 
-export function PerformanceDashboard() {
-  const [activeSubject, setActiveSubject] = useState<Subject>('Keyboard')
+function scoreTextToBand(score: string): PerformanceBand {
+  const lower = String(score).trim().toLowerCase()
+  if (lower.includes('red') || lower.includes('needs')) return 'Needs Improvement'
+  if (lower.includes('orange') || lower.includes('ok performance')) return 'OK Performance'
+  if (lower.includes('green') || lower.includes('good')) return 'Good Performance'
+  if (lower.includes('blue') || lower.includes('perfect')) return 'Perfect Timing'
+  if (lower.includes('yellow') || lower.includes('special')) return 'Special Performance'
+  const n = Number.parseInt(String(score).trim(), 10)
+  if (!Number.isNaN(n)) {
+    if (n < 60) return 'Needs Improvement'
+    if (n < 70) return 'OK Performance'
+    if (n < 80) return 'Good Performance'
+    if (n < 90) return 'Perfect Timing'
+    return 'Special Performance'
+  }
+  return 'Good Performance'
+}
 
-  const filteredStudents = useMemo(
-    () => students.filter((student) => student.subject === activeSubject),
-    [activeSubject],
-  )
+function attendancePercentForStudent(rows: AttendanceRow[], studentId: number): number {
+  const mine = rows.filter((r) => r.student_id === studentId)
+  if (mine.length === 0) return 0
+  const counted = mine.filter((r) => {
+    const s = (r.status || '').toLowerCase()
+    return s === 'present' || s === 'late'
+  }).length
+  return Math.round((counted / mine.length) * 100)
+}
+
+async function readApiJson<T>(res: Response): Promise<{ ok: boolean; data?: T; error?: string }> {
+  const body = (await res.json()) as { success?: boolean; data?: T; error?: string }
+  if (!res.ok) {
+    return { ok: false, error: body.error || res.statusText || 'Request failed' }
+  }
+  return { ok: true, data: body.data as T }
+}
+
+const PLACEHOLDER_PHOTO =
+  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=180&q=80&auto=format&fit=crop'
+
+export function PerformanceDashboard({ studentId, classId }: Props) {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [student, setStudent] = useState<StudentApi | null>(null)
+  const [performance, setPerformance] = useState<PerformanceRow[]>([])
+  const [attendance, setAttendance] = useState<AttendanceRow[]>([])
+
+  useEffect(() => {
+    if (!API_URL) {
+      setLoading(false)
+      setError('Set VITE_API_URL in the client environment to load dashboard data.')
+      return
+    }
+    if (!studentId) {
+      setLoading(false)
+      setError('Add student_id to the dashboard URL (e.g. ?student_id=1&class_id=1).')
+      setStudent(null)
+      setPerformance([])
+      setAttendance([])
+      return
+    }
+
+    let cancelled = false
+    async function load() {
+      setLoading(true)
+      setError(null)
+      try {
+        const perfQ = new URLSearchParams({ student_id: String(studentId) })
+        const perfUrl = apiUrl(`/api/performance?${perfQ}`)
+        const perfRes = await fetch(perfUrl, { headers: authHeaders() })
+        const perfJson = await readApiJson<PerformanceRow[]>(perfRes)
+        if (!perfJson.ok) throw new Error(perfJson.error)
+
+        const attParams = new URLSearchParams({ student_id: String(studentId) })
+        if (classId) attParams.set('class_id', String(classId))
+        const attRes = await fetch(apiUrl(`/api/attendance?${attParams}`), { headers: authHeaders() })
+        const attJson = await readApiJson<AttendanceRow[]>(attRes)
+        if (!attJson.ok) throw new Error(attJson.error)
+
+        const stRes = await fetch(apiUrl(`/api/students/${studentId}`), { headers: authHeaders() })
+        const stJson = await readApiJson<StudentApi>(stRes)
+        if (!stJson.ok) throw new Error(stJson.error)
+
+        if (cancelled) return
+        setPerformance(perfJson.data ?? [])
+        setAttendance(attJson.data ?? [])
+        setStudent(stJson.data ?? null)
+      } catch (e) {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : 'Could not load data')
+          setStudent(null)
+          setPerformance([])
+          setAttendance([])
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    void load()
+    return () => {
+      cancelled = true
+    }
+  }, [studentId, classId])
+
+  const view = useMemo(() => {
+    if (!studentId || !student) return null
+    const rows = [...performance].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    )
+    const latestScore = rows.length ? rows[rows.length - 1].score : '—'
+    const band = rows.length ? scoreTextToBand(latestScore) : 'Good Performance'
+    const numeric = rows.length ? scoreTextToNumeric(latestScore) : 0
+    const color = bandColors[band]
+    const trend = rows.map((r) => scoreTextToNumeric(r.score))
+    const pct = attendancePercentForStudent(attendance, studentId)
+    return {
+      name: student.name || 'Student',
+      photo: student.photo || PLACEHOLDER_PHOTO,
+      subject: student.subject || '—',
+      attendancePct: pct,
+      band,
+      color,
+      circleScore: numeric,
+      trend: trend.length ? trend : [numeric],
+      latestLabel: latestScore,
+    }
+  }, [student, studentId, performance, attendance])
+
+  if (loading) {
+    return (
+      <div className="rounded-[12px] border border-primary/[0.08] bg-white p-8 text-center text-sm text-primary/55 shadow-[var(--shadow-card)]">
+        Loading attendance and performance…
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-[12px] border border-red-200 bg-red-50 p-5 text-sm text-red-800 shadow-[var(--shadow-card)]">
+        {error}
+      </div>
+    )
+  }
+
+  if (!view) {
+    return (
+      <div className="rounded-[12px] border border-primary/[0.08] bg-white p-8 text-center text-sm text-primary/55 shadow-[var(--shadow-card)]">
+        No student data.
+      </div>
+    )
+  }
 
   return (
     <section className="space-y-5">
       <div className="rounded-[12px] border border-primary/[0.08] bg-white p-4 shadow-[var(--shadow-card)] sm:p-5">
-        <p className="mb-3 text-sm font-medium text-primary/65">Subjects</p>
-        <div className="flex flex-wrap gap-2.5">
-          {subjects.map((subject) => {
-            const active = subject === activeSubject
-            return (
-              <button
-                key={subject}
-                type="button"
-                onClick={() => setActiveSubject(subject)}
-                className={`rounded-[12px] border px-4 py-2 text-sm font-semibold transition ${
-                  active
-                    ? 'border-secondary bg-secondary/15 text-primary shadow-[0_4px_14px_-6px_rgba(212,175,55,0.55)]'
-                    : 'border-primary/[0.12] bg-white text-primary/75 hover:bg-primary/[0.04]'
-                }`}
-              >
-                {subject}
-              </button>
-            )
-          })}
-        </div>
+        <p className="text-sm font-medium text-primary/65">Subject</p>
+        <p className="mt-1 text-base font-semibold text-primary">{view.subject}</p>
+        {!classId ? (
+          <p className="mt-2 text-xs text-amber-800">
+            Optional: add class_id to the URL to scope attendance to a class roster.
+          </p>
+        ) : null}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {filteredStudents.map((student) => (
-          <article
-            key={student.id}
-            className="rounded-[12px] border border-primary/[0.08] bg-white p-5 shadow-[var(--shadow-card)]"
-          >
+        <article className="rounded-[12px] border border-primary/[0.08] bg-white p-5 shadow-[var(--shadow-card)] md:col-span-2 xl:col-span-3">
+          <div className="flex flex-wrap items-center gap-6">
             <div className="flex items-center gap-3">
               <img
-                src={student.photo}
-                alt={student.name}
+                src={view.photo}
+                alt={view.name}
                 className="h-12 w-12 rounded-full object-cover ring-2 ring-primary/10"
               />
               <div className="min-w-0">
-                <h3 className="truncate text-base font-semibold text-primary">{student.name}</h3>
-                <p className="text-sm text-primary/55">Attendance {student.attendance}%</p>
+                <h3 className="truncate text-base font-semibold text-primary">{view.name}</h3>
+                <p className="text-sm text-primary/55">Attendance {view.attendancePct}%</p>
               </div>
             </div>
 
-            <div className="mt-4 flex items-center justify-between gap-3">
-              <PerformanceCircle score={student.score} color={bandColors[student.band]} />
+            <div className="flex flex-1 flex-wrap items-center justify-between gap-3 sm:justify-end">
+              <PerformanceCircle score={view.circleScore} color={view.color} />
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-wide text-primary/45">Performance</p>
-                <p
-                  className="mt-1 text-sm font-semibold"
-                  style={{ color: bandColors[student.band] }}
-                >
-                  {student.band}
+                <p className="mt-1 text-sm font-semibold" style={{ color: view.color }}>
+                  {view.band}
                 </p>
+                <p className="mt-0.5 text-xs text-primary/50">Latest: {view.latestLabel}</p>
               </div>
             </div>
+          </div>
 
-            <div className="mt-4 rounded-[10px] border border-primary/[0.08] bg-surface/80 p-3">
-              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-primary/45">
-                Weekly performance
-              </p>
-              <WeeklyPerformanceChart values={student.trend} />
-            </div>
-          </article>
-        ))}
+          <div className="mt-4 rounded-[10px] border border-primary/[0.08] bg-surface/80 p-3">
+            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-primary/45">
+              Performance over time
+            </p>
+            <WeeklyPerformanceChart values={view.trend} />
+          </div>
+        </article>
       </div>
     </section>
   )
@@ -222,7 +311,7 @@ type WeekPoint = {
 
 function WeeklyPerformanceChart({ values }: { values: number[] }) {
   const data: WeekPoint[] = useMemo(
-    () => values.map((performance, i) => ({ week: `W${i + 1}`, performance })),
+    () => values.map((performance, i) => ({ week: `P${i + 1}`, performance })),
     [values],
   )
 

@@ -1,19 +1,53 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { authHeaders } from '../../auth/authService'
+import { API_URL, apiUrl } from '../../lib/api'
 
-const dashboardStats = {
-  totalStudents: 48,
-  todaysClasses: 6,
-  pendingEnquiries: 3,
-} as const
-
-const todaysClasses = [
-  { id: '1', name: 'Beginner Piano', time: '4:00 PM', teacher: 'John Mathew' },
-  { id: '2', name: 'Junior Drums', time: '4:30 PM', teacher: 'Rahul Varma' },
-  { id: '3', name: 'Vocal Group A', time: '5:00 PM', teacher: 'Ananya Menon' },
-  { id: '4', name: 'Guitar Foundations', time: '5:30 PM', teacher: 'Priya Nair' },
-] as const
+async function readList(res: Response): Promise<unknown[]> {
+  const body = (await res.json()) as { success?: boolean; data?: unknown[]; error?: string }
+  if (!res.ok) throw new Error(body.error || res.statusText || 'Request failed')
+  return (body.data ?? []) as unknown[]
+}
 
 export function AdminHomePage() {
+  const [studentCount, setStudentCount] = useState<number | null>(null)
+  const [classCount, setClassCount] = useState<number | null>(null)
+  const [summaryLoading, setSummaryLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!API_URL) {
+      setLoadError('VITE_API_URL is not set')
+      setSummaryLoading(false)
+      return
+    }
+    let cancelled = false
+    async function load() {
+      setSummaryLoading(true)
+      setLoadError(null)
+      try {
+        const [sRes, cRes] = await Promise.all([
+          fetch(apiUrl('/api/students'), { headers: authHeaders() }),
+          fetch(apiUrl('/api/classes'), { headers: authHeaders() }),
+        ])
+        const students = await readList(sRes)
+        const classes = await readList(cRes)
+        if (!cancelled) {
+          setStudentCount(students.length)
+          setClassCount(classes.length)
+        }
+      } catch (e) {
+        if (!cancelled) setLoadError(e instanceof Error ? e.message : 'Could not load summary')
+      } finally {
+        if (!cancelled) setSummaryLoading(false)
+      }
+    }
+    void load()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   return (
     <div className="space-y-10">
       <div>
@@ -21,57 +55,55 @@ export function AdminHomePage() {
         <p className="mt-1 text-lg text-primary/65">What needs your attention right now.</p>
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-3">
+      {loadError ? (
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{loadError}</p>
+      ) : null}
+
+      {summaryLoading && !loadError ? (
+        <p className="text-sm text-primary/55">Loading summary…</p>
+      ) : null}
+
+      <div className="grid gap-5 sm:grid-cols-2">
         <div className="rounded-2xl border border-primary/[0.06] bg-white p-6 shadow-[var(--shadow-card)]">
           <p className="text-base font-semibold text-primary/70">Total Students</p>
-          <p className="mt-3 text-4xl font-bold tabular-nums text-primary">{dashboardStats.totalStudents}</p>
+          <p className="mt-3 text-4xl font-bold tabular-nums text-primary">
+            {summaryLoading && studentCount == null ? '…' : studentCount == null ? '—' : studentCount}
+          </p>
         </div>
         <div className="rounded-2xl border border-primary/[0.06] bg-white p-6 shadow-[var(--shadow-card)]">
-          <p className="text-base font-semibold text-primary/70">Today&apos;s Classes</p>
-          <p className="mt-3 text-4xl font-bold tabular-nums text-secondary">{dashboardStats.todaysClasses}</p>
+          <p className="text-base font-semibold text-primary/70">Classes</p>
+          <p className="mt-3 text-4xl font-bold tabular-nums text-secondary">
+            {summaryLoading && classCount == null ? '…' : classCount == null ? '—' : classCount}
+          </p>
         </div>
-        <div className="rounded-2xl border border-primary/[0.06] bg-white p-6 shadow-[var(--shadow-card)]">
-          <p className="text-base font-semibold text-primary/70">Pending Enquiries</p>
-          <p className="mt-3 text-4xl font-bold tabular-nums text-primary">{dashboardStats.pendingEnquiries}</p>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-primary/[0.06] bg-white p-6 shadow-[var(--shadow-card)] md:p-8">
-        <h3 className="text-xl font-bold text-primary">Today&apos;s classes</h3>
-        <ul className="mt-6">
-          {todaysClasses.map((row) => (
-            <li
-              key={row.id}
-              className="grid grid-cols-1 gap-2 border-b border-primary/[0.08] py-4 last:border-0 sm:grid-cols-3 sm:items-center sm:gap-6"
-            >
-              <span className="text-lg font-semibold text-primary">{row.name}</span>
-              <span className="text-base font-medium text-primary/80">{row.time}</span>
-              <span className="text-base text-primary/65">{row.teacher}</span>
-            </li>
-          ))}
-        </ul>
       </div>
 
       <div>
         <h3 className="mb-4 text-xl font-bold text-primary">Quick actions</h3>
         <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
           <Link
+            to="/admin/users"
+            className="inline-flex min-h-[56px] flex-1 items-center justify-center rounded-xl bg-primary px-6 py-4 text-lg font-bold text-white shadow-[var(--shadow-soft)] transition hover:bg-primary-light sm:min-w-[200px]"
+          >
+            Manage users
+          </Link>
+          <Link
             to="/admin/students"
             className="inline-flex min-h-[56px] flex-1 items-center justify-center rounded-xl bg-primary px-6 py-4 text-lg font-bold text-white shadow-[var(--shadow-soft)] transition hover:bg-primary-light sm:min-w-[200px]"
           >
-            Add Student
+            Students
           </Link>
           <Link
             to="/admin/classes"
             className="inline-flex min-h-[56px] flex-1 items-center justify-center rounded-xl bg-primary px-6 py-4 text-lg font-bold text-white shadow-[var(--shadow-soft)] transition hover:bg-primary-light sm:min-w-[200px]"
           >
-            Add Class
+            Classes
           </Link>
           <Link
             to="/admin/attendance"
             className="inline-flex min-h-[56px] flex-1 items-center justify-center rounded-xl bg-secondary px-6 py-4 text-lg font-bold text-primary shadow-[0_4px_12px_rgba(212,175,55,0.3)] transition hover:bg-secondary-hover sm:min-w-[200px]"
           >
-            Mark Attendance
+            Attendance
           </Link>
         </div>
       </div>

@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
 import { Navbar } from '../components/Navbar'
 import { PageHero } from '../components/PageHero'
+import { PublicFooter } from '../components/PublicFooter'
+import { useSiteSettings } from '../context/SettingsContext'
 
 const studioImages = [
   { src: '/images/music-class.jpg', alt: 'Music classroom' },
@@ -9,12 +11,15 @@ const studioImages = [
 ] as const
 
 export function AboutPage() {
+  const { settings, loading } = useSiteSettings()
+  const academy = settings?.academy_name?.trim() || ''
+
   return (
     <div className="min-h-dvh bg-surface font-sans text-primary">
       <Navbar />
       <main>
         <PageHero
-          title="About G10 AMR"
+          title={loading && !academy ? 'About' : `About ${academy || 'us'}`}
           subtitle="Where passion meets structured musical growth"
         />
 
@@ -23,8 +28,19 @@ export function AboutPage() {
             <div>
               <h2 className="mb-5 text-2xl font-bold tracking-tight text-primary md:text-3xl">Our Story</h2>
               <p className="text-[17px] leading-relaxed text-primary/80">
-                G10 AMR is a home studio based music academy focused on nurturing talent through
-                personalized attention, structured learning, and real performance exposure.
+                {loading && !academy ? (
+                  '…'
+                ) : academy ? (
+                  <>
+                    <strong>{academy}</strong> is a home studio based music academy focused on nurturing talent
+                    through personalized attention, structured learning, and real performance exposure.
+                  </>
+                ) : (
+                  <>
+                    We are a home studio based music academy focused on nurturing talent through personalized
+                    attention, structured learning, and real performance exposure.
+                  </>
+                )}
               </p>
             </div>
             <div className="overflow-hidden rounded-[12px] shadow-[var(--shadow-card)]">
@@ -133,6 +149,7 @@ export function AboutPage() {
           </div>
         </section>
       </main>
+      <PublicFooter />
     </div>
   )
 }

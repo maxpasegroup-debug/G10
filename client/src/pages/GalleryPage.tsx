@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Navbar } from '../components/Navbar'
 import { PageHero } from '../components/PageHero'
+import { PublicFooter } from '../components/PublicFooter'
 
 type GalleryCategory = 'classes' | 'performances' | 'studio'
 
@@ -268,6 +269,8 @@ export function GalleryPage() {
           </div>
         </section>
       </main>
+
+      <PublicFooter />
 
       {currentLightboxItem ? (
         <div

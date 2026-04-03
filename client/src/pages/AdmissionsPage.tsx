@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Navbar } from '../components/Navbar'
 import { PageHero } from '../components/PageHero'
+import { PublicFooter } from '../components/PublicFooter'
+import { useSiteSettings } from '../context/SettingsContext'
 
 const courses = [
   { id: 'piano', title: 'Piano', image: '/images/hero-keyboard.jpg' },
@@ -19,6 +21,8 @@ const trustLines = [
 ] as const
 
 export function AdmissionsPage() {
+  const { settings, loading } = useSiteSettings()
+  const academy = settings?.academy_name?.trim() || ''
   const location = useLocation()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -50,7 +54,11 @@ export function AdmissionsPage() {
       <main>
         <PageHero
           title="Admissions Open"
-          subtitle="Start your musical journey with G10 AMR today"
+          subtitle={
+            loading && !academy
+              ? 'Loading…'
+              : `Start your musical journey with ${academy || 'us'} today`
+          }
         />
 
         <section className="px-4 py-10 sm:px-6 md:px-[60px] md:py-14">
@@ -255,6 +263,7 @@ export function AdmissionsPage() {
           </div>
         </section>
       </main>
+      <PublicFooter />
     </div>
   )
 }

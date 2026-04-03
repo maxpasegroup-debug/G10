@@ -43,6 +43,14 @@
   font-size: 22px;
 }
 
+/* Single-line dynamic academy name from API */
+.g10-navbar__logo-name {
+  font-size: 17px;
+  line-height: 1.2;
+  letter-spacing: 1px;
+  max-width: min(42vw, 320px);
+}
+
 .g10-navbar__menu {
   flex: 1;
   display: none;

@@ -3,14 +3,9 @@ import type { AuthResult, OtpLoginPayload, PasswordLoginPayload, UserRole } from
 
 const TOKEN_KEY = 'music_academy_token'
 
-/**
- * When `VITE_API_URL` is set, auth calls the Express API; otherwise a short delay simulates success (local UI).
- */
-
 export async function loginWithPassword(payload: PasswordLoginPayload): Promise<AuthResult> {
   if (!API_URL) {
-    await delay(400)
-    return { success: true }
+    throw new Error('Sign-in requires VITE_API_URL to be set.')
   }
 
   const res = await fetch(apiUrl('/api/auth/login'), {
@@ -21,24 +16,31 @@ export async function loginWithPassword(payload: PasswordLoginPayload): Promise<
       password: payload.password,
     }),
   })
-  const data = (await res.json()) as { success?: boolean; error?: string; data?: { token?: string } }
+  const data = (await res.json()) as {
+    success?: boolean
+    error?: string
+    data?: { token?: string; user?: { role?: string } }
+  }
   if (!res.ok) {
     throw new Error(data.error || 'Sign-in failed')
   }
   if (data.data?.token) {
     localStorage.setItem(TOKEN_KEY, data.data.token)
   }
-  return { success: true }
+  const apiRole = data.data?.user?.role
+  const role =
+    apiRole === 'admin' ||
+    apiRole === 'student' ||
+    apiRole === 'parent' ||
+    apiRole === 'teacher'
+      ? apiRole
+      : undefined
+  return { success: true, role: role ?? payload.role }
 }
 
 export async function loginWithOtp(_payload: OtpLoginPayload): Promise<AuthResult> {
-  if (!API_URL) {
-    await delay(400)
-    return { success: true }
-  }
-  // OTP endpoint not implemented on server yet — keep graceful fallback.
-  await delay(400)
-  return { success: true }
+  void _payload
+  throw new Error('OTP sign-in is not available.')
 }
 
 export async function requestPasswordReset(
@@ -47,23 +49,28 @@ export async function requestPasswordReset(
 ): Promise<void> {
   void _emailOrMobile
   void _role
-  await delay(300)
+  throw new Error('Password reset is not available.')
 }
 
 export async function sendOtp(_emailOrMobile: string, _role: UserRole): Promise<void> {
   void _emailOrMobile
   void _role
-  await delay(300)
+  throw new Error('OTP is not available.')
 }
 
 export function getStoredToken(): string | null {
   return localStorage.getItem(TOKEN_KEY)
 }
 
-export function clearStoredToken(): void {
-  localStorage.removeItem(TOKEN_KEY)
+/** Headers for authenticated API calls. Pass `true` when sending JSON body. */
+export function authHeaders(jsonBody?: boolean): HeadersInit {
+  const headers: Record<string, string> = {}
+  if (jsonBody) headers['Content-Type'] = 'application/json'
+  const token = getStoredToken()
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return headers
 }
 
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+export function clearStoredToken(): void {
+  localStorage.removeItem(TOKEN_KEY)
 }

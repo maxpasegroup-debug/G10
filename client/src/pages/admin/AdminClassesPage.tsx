@@ -1,93 +1,131 @@
-import { useCallback, useId, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useId, useState, type FormEvent } from 'react'
+import { authHeaders } from '../../auth/authService'
+import { API_URL, apiUrl } from '../../lib/api'
 
-type ClassItem = {
-  id: string
-  className: string
-  subject: string
-  time: string
-  teacher: string
+type ClassRow = {
+  id: number
+  name: string | null
+  subject: string | null
+  studio: string | null
+  is_live: boolean | null
 }
 
 const subjectOptions = ['Piano', 'Guitar', 'Vocal', 'Drums'] as const
 
-const initialClasses: ClassItem[] = [
-  {
-    id: 'c1',
-    className: 'Beginner Piano',
-    subject: 'Piano',
-    time: 'Mon, Wed, Fri – 5:00 PM',
-    teacher: 'John Mathew',
-  },
-  {
-    id: 'c2',
-    className: 'Junior Drums',
-    subject: 'Drums',
-    time: 'Tue, Thu – 4:30 PM',
-    teacher: 'Rahul Varma',
-  },
-  {
-    id: 'c3',
-    className: 'Vocal Group A',
-    subject: 'Vocal',
-    time: 'Mon, Wed – 5:00 PM',
-    teacher: 'Ananya Menon',
-  },
-]
-
-function nextId() {
-  return `c-${Date.now()}`
+async function readJson<T>(res: Response): Promise<T> {
+  const body = (await res.json()) as { success?: boolean; data?: T; error?: string }
+  if (!res.ok) throw new Error(body.error || res.statusText || 'Request failed')
+  return body.data as T
 }
 
 export function AdminClassesPage() {
   const formId = useId()
-  const [classes, setClasses] = useState<ClassItem[]>(initialClasses)
+  const [classes, setClasses] = useState<ClassRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [listError, setListError] = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
 
   const [name, setName] = useState('')
   const [subject, setSubject] = useState<string>(subjectOptions[0])
-  const [time, setTime] = useState('')
-  const [teacher, setTeacher] = useState('')
+  const [studio, setStudio] = useState('')
+  const [isLive, setIsLive] = useState(false)
+
+  const load = useCallback(async () => {
+    if (!API_URL) {
+      setError('VITE_API_URL is not set')
+      setClasses([])
+      return
+    }
+    setError(null)
+    const res = await fetch(apiUrl('/api/classes'), { headers: authHeaders() })
+    const data = await readJson<ClassRow[]>(res)
+    setClasses(data)
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    async function run() {
+      setLoading(true)
+      try {
+        await load()
+      } catch (e) {
+        if (!cancelled) setListError(e instanceof Error ? e.message : 'Could not load classes')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [load])
 
   const resetForm = useCallback(() => {
     setName('')
     setSubject(subjectOptions[0])
-    setTime('')
-    setTeacher('')
+    setStudio('')
+    setIsLive(false)
   }, [])
 
   const openForm = useCallback(() => {
+    setFormError(null)
     resetForm()
     setFormOpen(true)
   }, [resetForm])
 
   const closeForm = useCallback(() => {
+    if (submitting) return
     setFormOpen(false)
+    setFormError(null)
     resetForm()
-  }, [resetForm])
+  }, [resetForm, submitting])
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    setClasses((prev) => [
-      ...prev,
-      {
-        id: nextId(),
-        className: name.trim(),
-        subject,
-        time: time.trim(),
-        teacher: teacher.trim(),
-      },
-    ])
-    closeForm()
+    if (!API_URL) return
+    setFormError(null)
+    setSubmitting(true)
+    try {
+      const res = await fetch(apiUrl('/api/classes'), {
+        method: 'POST',
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          name: name.trim(),
+          subject,
+          studio: studio.trim() || null,
+          isLive,
+        }),
+      })
+      await readJson<ClassRow>(res)
+      setFormOpen(false)
+      setFormError(null)
+      resetForm()
+      await load()
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Could not create class')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  if (loading) {
+    return <p className="text-primary/60">Loading classes…</p>
   }
 
   return (
     <div className="space-y-6">
+      {listError ? (
+        <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{listError}</p>
+      ) : null}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-lg text-primary/70">{classes.length} classes</p>
         <button
           type="button"
           onClick={openForm}
-          className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-secondary px-6 py-3 text-base font-bold text-primary shadow-[0_4px_12px_rgba(212,175,55,0.3)] transition hover:bg-secondary-hover sm:ml-auto"
+          disabled={submitting}
+          className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-secondary px-6 py-3 text-base font-bold text-primary shadow-[0_4px_12px_rgba(212,175,55,0.3)] transition hover:bg-secondary-hover disabled:cursor-not-allowed disabled:opacity-50 sm:ml-auto"
         >
           Add Class
         </button>
@@ -99,50 +137,47 @@ export function AdminClassesPage() {
             key={item.id}
             className="rounded-2xl border border-primary/[0.08] bg-white p-5 shadow-[var(--shadow-card)] sm:p-6"
           >
-            <h3 className="text-xl font-bold text-primary">{item.className}</h3>
-            <div className="mt-3 grid gap-2 text-base sm:grid-cols-3 sm:gap-6">
-              <p>
-                <span className="font-semibold text-primary/55">Subject </span>
-                <span className="font-medium text-secondary">{item.subject}</span>
+            <p className="text-xl font-bold text-primary">{item.name}</p>
+            <p className="mt-2 text-base text-primary/75">
+              <span className="font-semibold text-primary/85">Subject: </span>
+              {item.subject || '—'}
+            </p>
+            {item.studio ? (
+              <p className="mt-1 text-base text-primary/75">
+                <span className="font-semibold text-primary/85">Studio / schedule: </span>
+                {item.studio}
               </p>
-              <p>
-                <span className="font-semibold text-primary/55">Time </span>
-                <span className="text-primary/85">{item.time}</span>
-              </p>
-              <p>
-                <span className="font-semibold text-primary/55">Teacher </span>
-                <span className="text-primary/85">{item.teacher}</span>
-              </p>
-            </div>
+            ) : null}
+            {item.is_live ? (
+              <span className="mt-3 inline-block rounded-lg bg-red-100 px-2 py-1 text-xs font-bold text-red-800">
+                Live
+              </span>
+            ) : null}
           </li>
         ))}
       </ul>
 
       {formOpen ? (
         <div
-          className="fixed inset-0 z-[200] flex items-end justify-center bg-black/50 p-4 sm:items-center"
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby={`${formId}-title`}
           onClick={closeForm}
         >
           <div
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl"
+            className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-3">
-              <h2 id={`${formId}-title`} className="text-xl font-bold text-primary">
-                Add class
-              </h2>
-              <button
-                type="button"
-                className="rounded-lg px-2 py-1 text-sm font-semibold text-primary/60 hover:text-primary"
-                onClick={closeForm}
-              >
-                Close
-              </button>
-            </div>
-            <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+            <h2 id={`${formId}-title`} className="text-xl font-bold text-primary">
+              Add class
+            </h2>
+            {formError ? (
+              <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+                {formError}
+              </p>
+            ) : null}
+            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               <div>
                 <label htmlFor={`${formId}-name`} className="mb-1.5 block text-sm font-semibold text-primary">
                   Class name
@@ -152,19 +187,21 @@ export function AdminClassesPage() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-xl border border-primary/[0.12] px-4 py-3.5 text-base text-primary outline-none ring-secondary/30 focus:ring-2"
+                  disabled={submitting}
+                  className="w-full rounded-xl border border-primary/[0.12] px-4 py-3 text-base text-primary outline-none ring-secondary/30 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
                   placeholder="e.g. Beginner Piano"
                 />
               </div>
               <div>
-                <label htmlFor={`${formId}-subject`} className="mb-1.5 block text-sm font-semibold text-primary">
+                <label htmlFor={`${formId}-sub`} className="mb-1.5 block text-sm font-semibold text-primary">
                   Subject
                 </label>
                 <select
-                  id={`${formId}-subject`}
+                  id={`${formId}-sub`}
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  className="w-full rounded-xl border border-primary/[0.12] px-4 py-3.5 text-base text-primary outline-none ring-secondary/30 focus:ring-2"
+                  disabled={submitting}
+                  className="w-full rounded-xl border border-primary/[0.12] px-4 py-3 text-base text-primary outline-none ring-secondary/30 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {subjectOptions.map((s) => (
                     <option key={s} value={s}>
@@ -174,36 +211,34 @@ export function AdminClassesPage() {
                 </select>
               </div>
               <div>
-                <label htmlFor={`${formId}-time`} className="mb-1.5 block text-sm font-semibold text-primary">
-                  Time
+                <label htmlFor={`${formId}-studio`} className="mb-1.5 block text-sm font-semibold text-primary">
+                  Studio / schedule
                 </label>
                 <input
-                  id={`${formId}-time`}
-                  required
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  className="w-full rounded-xl border border-primary/[0.12] px-4 py-3.5 text-base text-primary outline-none ring-secondary/30 focus:ring-2"
-                  placeholder="e.g. Mon, Wed – 5:00 PM"
+                  id={`${formId}-studio`}
+                  value={studio}
+                  onChange={(e) => setStudio(e.target.value)}
+                  disabled={submitting}
+                  className="w-full rounded-xl border border-primary/[0.12] px-4 py-3 text-base text-primary outline-none ring-secondary/30 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
+                  placeholder="Room or times"
                 />
               </div>
-              <div>
-                <label htmlFor={`${formId}-teacher`} className="mb-1.5 block text-sm font-semibold text-primary">
-                  Teacher
-                </label>
+              <label className="flex items-center gap-2 text-sm font-medium text-primary">
                 <input
-                  id={`${formId}-teacher`}
-                  required
-                  value={teacher}
-                  onChange={(e) => setTeacher(e.target.value)}
-                  className="w-full rounded-xl border border-primary/[0.12] px-4 py-3.5 text-base text-primary outline-none ring-secondary/30 focus:ring-2"
-                  placeholder="Teacher name"
+                  type="checkbox"
+                  checked={isLive}
+                  onChange={(e) => setIsLive(e.target.checked)}
+                  disabled={submitting}
+                  className="h-4 w-4 rounded border-primary/30 disabled:cursor-not-allowed disabled:opacity-60"
                 />
-              </div>
+                Mark as live session
+              </label>
               <button
                 type="submit"
-                className="w-full min-h-[52px] rounded-xl bg-secondary py-3 text-base font-bold text-primary shadow-[0_4px_12px_rgba(212,175,55,0.3)] transition hover:bg-secondary-hover"
+                disabled={submitting}
+                className="w-full min-h-[52px] rounded-xl bg-secondary py-3 text-base font-bold text-primary shadow-[0_4px_12px_rgba(212,175,55,0.3)] transition hover:bg-secondary-hover disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Save class
+                {submitting ? 'Creating…' : 'Create class'}
               </button>
             </form>
           </div>

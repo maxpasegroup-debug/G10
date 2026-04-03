@@ -20,11 +20,15 @@ async function register(req, res) {
   }
 
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS)
+  const publicRoles = ['student', 'parent', 'teacher']
+  const requested = String(role || 'student').toLowerCase()
+  const safeRole = publicRoles.includes(requested) ? requested : 'student'
+
   const user = await userModel.createUser({
     name: name || null,
     email,
     passwordHash,
-    role: role || 'student',
+    role: safeRole,
   })
 
   const token = jwt.sign(

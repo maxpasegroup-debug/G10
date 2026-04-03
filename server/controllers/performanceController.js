@@ -1,15 +1,18 @@
 const performanceModel = require('../models/performanceModel')
 
 async function list(req, res) {
-  const { studentId } = req.query
+  const studentId = req.query.student_id ?? req.query.studentId
+  const classId = req.query.class_id ?? req.query.classId
   const rows = await performanceModel.listPerformance({
-    studentId: studentId ? Number(studentId) : undefined,
+    studentId: studentId != null && studentId !== '' ? Number(studentId) : undefined,
+    classId: classId != null && classId !== '' ? Number(classId) : undefined,
   })
   res.json({ success: true, data: rows })
 }
 
 async function create(req, res) {
-  const { studentId, score, remarks } = req.body
+  const studentId = req.body.studentId ?? req.body.student_id
+  const { score, remarks } = req.body
   if (!studentId || !score) {
     const err = new Error('studentId and score are required')
     err.status = 400

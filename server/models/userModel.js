@@ -23,4 +23,16 @@ async function findById(id) {
   return rows[0] || null
 }
 
-module.exports = { findByEmail, createUser, findById }
+async function listUsers() {
+  const { rows } = await pool.query(
+    'SELECT id, name, email, role, created_at FROM users ORDER BY id ASC',
+  )
+  return rows
+}
+
+async function deleteUser(id) {
+  const { rowCount } = await pool.query('DELETE FROM users WHERE id = $1', [id])
+  return rowCount > 0
+}
+
+module.exports = { findByEmail, createUser, findById, listUsers, deleteUser }

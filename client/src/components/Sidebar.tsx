@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom'
+import { useSiteSettings } from '../context/SettingsContext'
 
 export function Sidebar() {
+  const { settings, loading } = useSiteSettings()
+  const email = settings?.email?.trim() || ''
   return (
     <aside
       className="hidden w-[280px] shrink-0 lg:block xl:w-[300px]"
@@ -46,7 +49,16 @@ export function Sidebar() {
 
         <div className="rounded-[12px] bg-white p-5 shadow-[var(--shadow-card)]">
           <p className="text-sm font-medium text-secondary">Need help?</p>
-          <p className="mt-1 text-sm text-primary/65">admissions@g10amr.edu</p>
+          {email ? (
+            <a
+              href={`mailto:${email}`}
+              className="mt-1 block break-all text-sm text-primary/65 underline-offset-2 hover:text-primary hover:underline"
+            >
+              {email}
+            </a>
+          ) : (
+            <p className="mt-1 text-sm text-primary/50">{loading ? '…' : '—'}</p>
+          )}
         </div>
       </div>
     </aside>

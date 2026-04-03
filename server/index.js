@@ -1,49 +1,51 @@
 require('dotenv').config()
 
+const path = require('path')
 const express = require('express')
 const cors = require('cors')
-const rateLimit = require('express-rate-limit')
+const helmet = require('helmet')
 
+const { buildCorsOptions, validateProductionCors } = require('./middleware/corsConfig')
+const { apiLimiter } = require('./middleware/rateLimits')
 const { errorHandler } = require('./middleware/errorHandler')
+
+validateProductionCors()
 
 const authRoutes = require('./routes/authRoutes')
 const studentRoutes = require('./routes/studentRoutes')
 const attendanceRoutes = require('./routes/attendanceRoutes')
 const performanceRoutes = require('./routes/performanceRoutes')
 const classesRoutes = require('./routes/classesRoutes')
+const testsRoutes = require('./routes/testsRoutes')
+const submitTestRoutes = require('./routes/submitTestRoutes')
+const userRoutes = require('./routes/userRoutes')
+const settingsRoutes = require('./routes/settingsRoutes')
+const galleryRoutes = require('./routes/galleryRoutes')
+const enquiryRoutes = require('./routes/enquiryRoutes')
+const { syncTests } = require('./lib/syncTests')
 
 const app = express()
 const PORT = process.env.PORT || 5000
 
 app.set('trust proxy', 1)
 
-// Debug logger
-app.use((req, _res, next) => {
-  console.log('Incoming request:', req.method, req.url)
-  next()
-})
-
 app.use(
-  cors({
-    origin: process.env.CORS_ORIGIN || '*',
-    credentials: true,
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
   }),
 )
+app.use(cors(buildCorsOptions()))
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 300,
-  standardHeaders: true,
-  legacyHeaders: false,
-})
-app.use(limiter)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
+
+app.use(apiLimiter())
 
 // Root + health
 app.get('/', (_req, res) => {
-  res.send('API is running 🚀')
+  res.type('text/plain').send('ok')
 })
 
 app.get('/api/health', (_req, res) => {
@@ -52,22 +54,36 @@ app.get('/api/health', (_req, res) => {
 
 // API routes
 app.use('/api/auth', authRoutes)
+app.use('/api/settings', settingsRoutes)
+app.use('/api/gallery', galleryRoutes)
+app.use('/api/enquiries', enquiryRoutes)
 app.use('/api/students', studentRoutes)
 app.use('/api/attendance', attendanceRoutes)
 app.use('/api/performance', performanceRoutes)
 app.use('/api/classes', classesRoutes)
+app.use('/api/tests', testsRoutes)
+app.use('/api/submit-test', submitTestRoutes)
+app.use('/api/users', userRoutes)
 
 // 404 handler last
 app.use((req, res) => {
+  const isProd = process.env.NODE_ENV === 'production'
   res.status(404).json({
     success: false,
     error: 'Not found',
-    path: req.originalUrl,
+    ...(isProd ? {} : { path: req.originalUrl }),
   })
 })
 
 app.use(errorHandler)
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
-})
+async function start() {
+  try {
+    await syncTests()
+  } catch {
+    /* registry optional */
+  }
+  app.listen(PORT)
+}
+
+start()

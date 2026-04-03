@@ -1,4 +1,4 @@
-export type UserRole = 'student' | 'parent' | 'teacher'
+export type UserRole = 'student' | 'parent' | 'teacher' | 'admin'
 
 export interface LoginCredentials {
   role: UserRole
@@ -15,6 +15,7 @@ export interface OtpLoginPayload extends LoginCredentials {
 }
 
 export interface AuthResult {
-  /** Future: session token, user id, etc. */
   success: boolean
+  /** Present after password login when the API returns the user. */
+  role?: UserRole
 }

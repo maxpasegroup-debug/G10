@@ -7,11 +7,20 @@ CREATE TABLE users (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE classes (
+  id SERIAL PRIMARY KEY,
+  name TEXT,
+  subject TEXT,
+  studio TEXT,
+  is_live BOOLEAN DEFAULT false
+);
+
 CREATE TABLE students (
   id SERIAL PRIMARY KEY,
   name TEXT,
   photo TEXT,
-  subject TEXT
+  subject TEXT,
+  class_id INT REFERENCES classes (id) ON DELETE SET NULL
 );
 
 CREATE TABLE attendance (
@@ -29,10 +38,48 @@ CREATE TABLE performance (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE classes (
+-- Config-driven assessments (rows upserted by server/lib/syncTests.js)
+CREATE TABLE tests (
   id SERIAL PRIMARY KEY,
-  name TEXT,
-  subject TEXT,
-  studio TEXT,
-  is_live BOOLEAN DEFAULT false
+  name TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE site_settings (
+  id SMALLINT PRIMARY KEY DEFAULT 1 CONSTRAINT site_settings_single_row CHECK (id = 1),
+  academy_name TEXT NOT NULL DEFAULT '',
+  email TEXT NOT NULL DEFAULT '',
+  phone TEXT NOT NULL DEFAULT '',
+  address TEXT NOT NULL DEFAULT '',
+  map_embed_url TEXT
+);
+
+INSERT INTO site_settings (id, academy_name, email, phone, address, map_embed_url)
+VALUES (
+  1,
+  'G10 AMR Music Academy',
+  'admissions@g10amr.edu',
+  '+91 98765 43210',
+  'Home studio, Trivandrum, Kerala',
+  'https://maps.google.com/maps?q=Thiruvananthapuram%2C%20Kerala&t=m&z=12&output=embed&iwloc=near'
+);
+
+CREATE TABLE enquiries (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  course TEXT NOT NULL,
+  age TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE gallery_items (
+  id SERIAL PRIMARY KEY,
+  image_url TEXT NOT NULL,
+  caption TEXT NOT NULL DEFAULT '',
+  category TEXT NOT NULL DEFAULT 'classes',
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT gallery_items_category_check CHECK (category IN ('classes', 'performances', 'studio'))
 );

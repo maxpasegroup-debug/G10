@@ -1,4 +1,5 @@
 import { Navbar } from '../components/Navbar'
+import { PublicFooter } from '../components/PublicFooter'
 import { MusicHero } from '../components/music/MusicHero'
 import { MusicLandingSections } from '../components/music/MusicLandingSections'
 import { Sidebar } from '../components/Sidebar'
@@ -12,6 +13,7 @@ export function LandingPage() {
         <MusicLandingSections />
         <Sidebar />
       </div>
+      <PublicFooter />
     </div>
   )
 }

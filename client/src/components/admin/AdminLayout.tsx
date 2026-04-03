@@ -2,9 +2,11 @@ import { useMemo, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { AdminHeader } from './AdminHeader'
 import { AdminSidebar } from './AdminSidebar'
+import { RequireAdmin } from './RequireAdmin'
 
 const PAGE_TITLES: Record<string, string> = {
   '/admin': 'Home',
+  '/admin/users': 'Users',
   '/admin/students': 'Students',
   '/admin/classes': 'Classes',
   '/admin/attendance': 'Attendance',
@@ -58,7 +60,9 @@ export function AdminLayout() {
           onMenuClick={() => setMobileNavOpen(true)}
         />
         <main className="flex-1 bg-white p-6">
-          <Outlet />
+          <RequireAdmin>
+            <Outlet />
+          </RequireAdmin>
         </main>
       </div>
     </div>

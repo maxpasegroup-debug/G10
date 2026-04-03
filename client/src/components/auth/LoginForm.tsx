@@ -11,6 +11,7 @@ const roleLabels: Record<UserRole, string> = {
   student: 'Student',
   parent: 'Parent',
   teacher: 'Teacher',
+  admin: 'Administrator',
 }
 
 type AuthMode = 'password' | 'otp'
@@ -41,7 +42,7 @@ export function LoginForm({ role, onChangeRole, onLoginSuccess }: LoginFormProps
         password,
       })
       if (result.success) {
-        onLoginSuccess(role)
+        onLoginSuccess(result.role ?? role)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign-in failed')
@@ -61,7 +62,7 @@ export function LoginForm({ role, onChangeRole, onLoginSuccess }: LoginFormProps
         otp: otp.trim(),
       })
       if (result.success) {
-        onLoginSuccess(role)
+        onLoginSuccess(result.role ?? role)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'OTP sign-in failed')
@@ -119,7 +120,8 @@ export function LoginForm({ role, onChangeRole, onLoginSuccess }: LoginFormProps
         <button
           type="button"
           onClick={onChangeRole}
-          className="shrink-0 text-sm font-medium text-primary/70 underline-offset-2 hover:text-primary hover:underline"
+          disabled={loading}
+          className="shrink-0 text-sm font-medium text-primary/70 underline-offset-2 hover:text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-50"
         >
           Change role
         </button>
@@ -134,11 +136,12 @@ export function LoginForm({ role, onChangeRole, onLoginSuccess }: LoginFormProps
           type="button"
           role="tab"
           aria-selected={mode === 'password'}
+          disabled={loading}
           onClick={() => {
             setMode('password')
             setError(null)
           }}
-          className={`flex-1 rounded-[10px] py-2.5 text-sm font-medium transition ${
+          className={`flex-1 rounded-[10px] py-2.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
             mode === 'password'
               ? 'bg-white text-primary shadow-sm'
               : 'text-primary/60 hover:text-primary'
@@ -150,11 +153,12 @@ export function LoginForm({ role, onChangeRole, onLoginSuccess }: LoginFormProps
           type="button"
           role="tab"
           aria-selected={mode === 'otp'}
+          disabled={loading}
           onClick={() => {
             setMode('otp')
             setError(null)
           }}
-          className={`flex-1 rounded-[10px] py-2.5 text-sm font-medium transition ${
+          className={`flex-1 rounded-[10px] py-2.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
             mode === 'otp'
               ? 'bg-white text-primary shadow-sm'
               : 'text-primary/60 hover:text-primary'
@@ -186,7 +190,8 @@ export function LoginForm({ role, onChangeRole, onLoginSuccess }: LoginFormProps
               autoComplete="username"
               value={emailOrMobile}
               onChange={(e) => setEmailOrMobile(e.target.value)}
-              className="w-full rounded-[12px] border border-primary/[0.12] bg-white px-4 py-3 text-sm text-primary shadow-[inset_0_1px_2px_rgba(11,42,74,0.04)] outline-none transition placeholder:text-primary/35 focus:border-primary/35 focus:ring-2 focus:ring-secondary/40"
+              disabled={loading}
+              className="w-full rounded-[12px] border border-primary/[0.12] bg-white px-4 py-3 text-sm text-primary shadow-[inset_0_1px_2px_rgba(11,42,74,0.04)] outline-none transition placeholder:text-primary/35 focus:border-primary/35 focus:ring-2 focus:ring-secondary/40 disabled:cursor-not-allowed disabled:opacity-60"
               placeholder="you@school.edu or +91 …"
               required
             />
@@ -202,7 +207,8 @@ export function LoginForm({ role, onChangeRole, onLoginSuccess }: LoginFormProps
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-[12px] border border-primary/[0.12] bg-white px-4 py-3 text-sm text-primary shadow-[inset_0_1px_2px_rgba(11,42,74,0.04)] outline-none transition placeholder:text-primary/35 focus:border-primary/35 focus:ring-2 focus:ring-secondary/40"
+              disabled={loading}
+              className="w-full rounded-[12px] border border-primary/[0.12] bg-white px-4 py-3 text-sm text-primary shadow-[inset_0_1px_2px_rgba(11,42,74,0.04)] outline-none transition placeholder:text-primary/35 focus:border-primary/35 focus:ring-2 focus:ring-secondary/40 disabled:cursor-not-allowed disabled:opacity-60"
               placeholder="••••••••"
               required
             />
@@ -256,7 +262,8 @@ export function LoginForm({ role, onChangeRole, onLoginSuccess }: LoginFormProps
                 autoComplete="one-time-code"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
-                className="w-full rounded-[12px] border border-primary/[0.12] bg-white px-4 py-3 text-sm text-primary shadow-[inset_0_1px_2px_rgba(11,42,74,0.04)] outline-none transition placeholder:text-primary/35 focus:border-primary/35 focus:ring-2 focus:ring-secondary/40"
+                disabled={loading}
+                className="w-full rounded-[12px] border border-primary/[0.12] bg-white px-4 py-3 text-sm text-primary shadow-[inset_0_1px_2px_rgba(11,42,74,0.04)] outline-none transition placeholder:text-primary/35 focus:border-primary/35 focus:ring-2 focus:ring-secondary/40 disabled:cursor-not-allowed disabled:opacity-60"
                 placeholder="6-digit code"
                 required
               />

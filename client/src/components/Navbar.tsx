@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { useSiteSettings } from '../context/SettingsContext'
 
 const navItems = [
   { label: 'HOME', to: '/' },
@@ -18,6 +19,8 @@ function linkClassName(isActive: boolean) {
 export function Navbar() {
   const [open, setOpen] = useState(false)
   const location = useLocation()
+  const { settings, loading } = useSiteSettings()
+  const academyName = settings?.academy_name?.trim() || ''
 
   const isItemActive = (item: (typeof navItems)[number]) => {
     if (item.label === 'HOME') {
@@ -50,11 +53,10 @@ export function Navbar() {
         <Link
           to="/"
           className="g10-navbar__logo"
-          aria-label="G10 AMR home"
+          aria-label={academyName ? `${academyName} home` : 'Home'}
           onClick={() => setOpen(false)}
         >
-          <span>G10</span>
-          <span>AMR</span>
+          <span className="g10-navbar__logo-name">{loading && !academyName ? '…' : academyName}</span>
         </Link>
 
         <nav className="g10-navbar__menu" aria-label="Main">

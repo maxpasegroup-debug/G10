@@ -16,6 +16,11 @@ const roles: { id: UserRole; label: string; description: string }[] = [
     label: 'Teacher',
     description: 'Rosters, grading, and classroom tools',
   },
+  {
+    id: 'admin',
+    label: 'Administrator',
+    description: 'Staff dashboard and user management',
+  },
 ]
 
 type RoleSelectionProps = {

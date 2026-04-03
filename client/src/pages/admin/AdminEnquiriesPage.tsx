@@ -1,79 +1,110 @@
-type Enquiry = {
-  id: string
+import { useCallback, useEffect, useState } from 'react'
+import { authHeaders } from '../../auth/authService'
+import { API_URL, apiUrl } from '../../lib/api'
+
+type EnquiryRow = {
+  id: number
   name: string
   phone: string
   course: string
+  age: string | null
+  created_at: string
 }
 
-/** Mock enquiries — replace with API data later. */
-const initialEnquiries: Enquiry[] = [
-  { id: 'e1', name: 'Anjali Varma', phone: '+91 98765 44102', course: 'Piano' },
-  { id: 'e2', name: 'Rohit Menon', phone: '+91 98234 88190', course: 'Drums' },
-  { id: 'e3', name: 'Priya Nambiar', phone: '+91 97456 22001', course: 'Vocal' },
-  { id: 'e4', name: 'Karthik Raj', phone: '+91 98470 11933', course: 'Guitar' },
-  { id: 'e5', name: 'Deepa Suresh', phone: '+91 94472 55680', course: 'Piano' },
-]
-
-function phoneDigits(phone: string): string {
-  return phone.replace(/\D/g, '')
+async function readList<T>(res: Response): Promise<T> {
+  const body = (await res.json()) as { success?: boolean; data?: T; error?: string }
+  if (!res.ok) throw new Error(body.error || res.statusText || 'Request failed')
+  return body.data as T
 }
 
-function telHref(phone: string): string {
-  const d = phoneDigits(phone)
-  if (!d) return '#'
-  return `tel:+${d}`
-}
-
-function whatsappHref(phone: string, leadName: string): string {
-  const d = phoneDigits(phone)
-  if (!d) return '#'
-  const text = `Hi ${leadName}, this is G10 AMR — thanks for your enquiry about classes.`
-  return `https://wa.me/${d}?text=${encodeURIComponent(text)}`
+function formatWhen(iso: string) {
+  try {
+    return new Date(iso).toLocaleString()
+  } catch {
+    return iso
+  }
 }
 
 export function AdminEnquiriesPage() {
+  const [rows, setRows] = useState<EnquiryRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const load = useCallback(async () => {
+    if (!API_URL) {
+      setError('VITE_API_URL is not set')
+      setRows([])
+      setLoading(false)
+      return
+    }
+    setError(null)
+    const res = await fetch(apiUrl('/api/enquiries'), { headers: authHeaders() })
+    const data = await readList<EnquiryRow[]>(res)
+    setRows(data)
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      setLoading(true)
+      try {
+        await load()
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Could not load enquiries')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [load])
+
   return (
     <div className="max-w-3xl space-y-6">
       <div>
         <h2 className="text-lg font-bold text-primary sm:text-xl">Enquiries</h2>
-        <p className="mt-1 text-sm text-primary/65">Tap Call or WhatsApp to reach out right away.</p>
+        <p className="mt-1 text-sm text-primary/65">Review and respond to admission enquiries.</p>
       </div>
 
-      <ul className="space-y-4">
-        {initialEnquiries.map((row) => (
-          <li
-            key={row.id}
-            className="rounded-2xl border border-primary/[0.08] bg-white p-5 shadow-[var(--shadow-card)] sm:p-6"
-          >
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-              <div className="min-w-0 space-y-2">
-                <p className="text-xl font-bold text-primary">{row.name}</p>
-                <p className="text-lg font-semibold text-primary/85 tabular-nums">{row.phone}</p>
-                <p className="text-base text-primary/70">
-                  <span className="font-semibold text-primary/80">Course: </span>
-                  {row.course}
+      {error ? (
+        <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
+      ) : null}
+
+      {loading ? (
+        <p className="text-primary/60">Loading…</p>
+      ) : rows.length === 0 ? (
+        <p className="rounded-2xl border border-primary/[0.08] bg-white p-8 text-center text-base text-primary/55 shadow-[var(--shadow-card)]">
+          No enquiries yet.
+        </p>
+      ) : (
+        <ul className="space-y-4">
+          {rows.map((r) => (
+            <li
+              key={r.id}
+              className="rounded-2xl border border-primary/[0.08] bg-white p-5 shadow-[var(--shadow-card)]"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <p className="text-lg font-bold text-primary">{r.name}</p>
+                <time className="text-xs text-primary/50" dateTime={r.created_at}>
+                  {formatWhen(r.created_at)}
+                </time>
+              </div>
+              <p className="mt-2 text-sm text-primary/80">
+                <span className="font-semibold">Phone:</span> {r.phone}
+              </p>
+              <p className="mt-1 text-sm text-primary/80">
+                <span className="font-semibold">Course:</span> {r.course}
+              </p>
+              {r.age ? (
+                <p className="mt-1 text-sm text-primary/80">
+                  <span className="font-semibold">Age:</span> {r.age}
                 </p>
-              </div>
-              <div className="flex shrink-0 flex-col gap-2 sm:w-44">
-                <a
-                  href={telHref(row.phone)}
-                  className="inline-flex min-h-[52px] items-center justify-center rounded-xl bg-primary px-5 text-base font-bold text-white shadow-[var(--shadow-soft)] transition hover:bg-primary-light"
-                >
-                  Call
-                </a>
-                <a
-                  href={whatsappHref(row.phone, row.name.split(' ')[0] ?? row.name)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex min-h-[52px] items-center justify-center rounded-xl bg-[#25D366] px-5 text-base font-bold text-white transition hover:bg-[#20bd5a]"
-                >
-                  WhatsApp
-                </a>
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

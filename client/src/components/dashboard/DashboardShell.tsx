@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { UserRole } from '../../auth/types'
+import { DashboardHomeSummary } from './DashboardHomeSummary'
 
 const PerformanceDashboard = lazy(async () => {
   const m = await import('./PerformanceDashboard')
@@ -26,6 +27,8 @@ type MenuKey =
 
 type DashboardShellProps = {
   role: UserRole
+  studentId?: number
+  classId?: number
 }
 
 type MenuItem = {
@@ -47,12 +50,14 @@ const roleTitle: Record<UserRole, string> = {
   student: 'Student Portal',
   parent: 'Parent Portal',
   teacher: 'Teacher Portal',
+  admin: 'Admin',
 }
 
 const roleName: Record<UserRole, string> = {
   student: 'Student',
   parent: 'Parent',
   teacher: 'Teacher',
+  admin: 'Administrator',
 }
 
 type AlertTone = 'danger' | 'info' | 'success' | 'warning'
@@ -210,7 +215,9 @@ export function DashboardShell({ role }: DashboardShellProps) {
             </div>
           </header>
 
-          <main className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{renderSection(active, role, alerts)}</main>
+          <main className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+            {renderSection(active, role, alerts, studentId, classId)}
+          </main>
         </div>
       </div>
 
@@ -230,7 +237,13 @@ export function DashboardShell({ role }: DashboardShellProps) {
   )
 }
 
-function renderSection(active: MenuKey, role: UserRole, alerts: SmartAlert[]) {
+function renderSection(
+  active: MenuKey,
+  role: UserRole,
+  alerts: SmartAlert[],
+  studentId?: number,
+  classId?: number,
+) {
   if (active === 'classes') {
     return (
       <Suspense
@@ -268,7 +281,7 @@ function renderSection(active: MenuKey, role: UserRole, alerts: SmartAlert[]) {
           </div>
         }
       >
-        <PerformanceDashboard />
+        <PerformanceDashboard studentId={studentId} classId={classId} />
       </Suspense>
     )
   }
@@ -289,22 +302,7 @@ function renderSection(active: MenuKey, role: UserRole, alerts: SmartAlert[]) {
           </div>
         ) : null}
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {[
-            ['Upcoming classes', role === 'teacher' ? '6 sessions' : '4 sessions'],
-            ['Attendance', role === 'parent' ? '95% (child)' : '96%'],
-            ['Performance', role === 'teacher' ? '24 submissions' : 'A- average'],
-            ['Messages', '3 unread'],
-          ].map(([label, value]) => (
-            <article
-              key={label}
-              className="rounded-[12px] border border-primary/[0.08] bg-white p-5 shadow-[var(--shadow-card)]"
-            >
-              <p className="text-sm text-primary/60">{label}</p>
-              <p className="mt-2 text-2xl font-semibold text-primary">{value}</p>
-            </article>
-          ))}
-        </div>
+        <DashboardHomeSummary role={role} studentId={studentId} classId={classId} />
       </div>
     )
   }
@@ -329,21 +327,7 @@ const toneStyles: Record<AlertTone, string> = {
   warning: 'border-amber-200 text-amber-700 bg-amber-50',
 }
 
-function getRoleAlerts(role: UserRole): SmartAlert[] {
-  if (role === 'parent') {
-    return [
-      { id: 'p-1', text: "Your child missed today's class", tone: 'danger' },
-      { id: 'p-2', text: 'Performance dropped this week', tone: 'warning' },
-      { id: 'p-3', text: 'Great improvement!', tone: 'success' },
-    ]
-  }
-
-  if (role === 'student') {
-    return [
-      { id: 's-1', text: 'You improved this week!', tone: 'success' },
-      { id: 's-2', text: 'Practice more to reach Blue level', tone: 'info' },
-    ]
-  }
-
+function getRoleAlerts(_role: UserRole): SmartAlert[] {
+  void _role
   return []
 }

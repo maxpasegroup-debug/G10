@@ -23,7 +23,7 @@ npm run dev:server
 
 ## Environment
 
-- **Client:** copy `client/.env.example` → `client/.env` and set `VITE_API_URL` (e.g. `http://localhost:5000`).
+- **Client:** copy `client/.env.example` → `client/.env` and set `VITE_API_URL` to your deployed API base URL (no trailing slash).
 - **Server:** copy `server/.env.example` → `server/.env` and set `DATABASE_URL`, `JWT_SECRET`, `PORT`.
 
 ## Database

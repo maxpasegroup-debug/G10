@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Navbar } from '../components/Navbar'
+import { PublicFooter } from '../components/PublicFooter'
 import { PageHero } from '../components/PageHero'
 
 type Subject = 'Piano' | 'Guitar' | 'Vocal' | 'Drums'
@@ -273,6 +274,7 @@ export function ClassesPage() {
           </div>
         </section>
       </main>
+      <PublicFooter />
     </div>
   )
 }
