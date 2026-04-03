@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { UserRole } from '../../auth/types'
+import { logout } from '../../auth/authService'
+import { useSiteSettings } from '../../context/SettingsContext'
 import { DashboardHomeSummary } from './DashboardHomeSummary'
 
 const PerformanceDashboard = lazy(async () => {
@@ -69,6 +71,11 @@ type SmartAlert = {
 }
 
 export function DashboardShell({ role, studentId, classId }: DashboardShellProps) {
+  const { settings, loading: settingsLoading } = useSiteSettings()
+  const academy = settings?.academy_name?.trim() || ''
+  const brandShort = settingsLoading && !academy ? '…' : academy.slice(0, 3).toUpperCase() || '—'
+  const brandName = settingsLoading && !academy ? '…' : academy || 'Portal'
+
   const [active, setActive] = useState<MenuKey>('attendance')
   const [toastIds, setToastIds] = useState<string[]>([])
 
@@ -106,9 +113,9 @@ export function DashboardShell({ role, studentId, classId }: DashboardShellProps
             className="mb-8 flex items-center gap-2.5 rounded-[12px] px-2 py-1 text-white no-underline"
           >
             <span className="flex h-9 min-w-9 items-center justify-center rounded-[12px] border border-secondary/30 bg-primary px-2 text-xs font-semibold text-secondary">
-              G10
+              {brandShort}
             </span>
-            <span className="font-[var(--font-brand)] text-lg tracking-wide text-secondary">G10 AMR</span>
+            <span className="font-[var(--font-brand)] text-lg tracking-wide text-secondary">{brandName}</span>
           </Link>
 
           <p className="mb-3 px-2 text-xs font-semibold uppercase tracking-wider text-secondary/80">
@@ -203,12 +210,13 @@ export function DashboardShell({ role, studentId, classId }: DashboardShellProps
                     >
                       My Profile
                     </button>
-                    <Link
-                      to="/login"
-                      className="block rounded-[10px] px-3 py-2 text-sm text-primary/80 no-underline hover:bg-primary/[0.05]"
+                    <button
+                      type="button"
+                      className="block w-full rounded-[10px] px-3 py-2 text-left text-sm text-primary/80 hover:bg-primary/[0.05]"
+                      onClick={() => logout()}
                     >
-                      Switch account
-                    </Link>
+                      Log out
+                    </button>
                   </div>
                 </details>
               </div>
@@ -313,8 +321,8 @@ function renderSection(
         {menuItems.find((item) => item.key === active)?.label}
       </h2>
       <p className="mt-2 text-sm leading-relaxed text-primary/65">
-        This is dynamic content for the {roleName[role].toLowerCase()} role. Connect this section
-        to your backend module for real data rendering.
+        This section is not available in the portal yet. Use Dashboard, My Classes, or Attendance
+        {' & '}Performance for live data from your account.
       </p>
     </section>
   )

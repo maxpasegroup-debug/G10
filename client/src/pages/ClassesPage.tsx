@@ -1,165 +1,22 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Navbar } from '../components/Navbar'
 import { PublicFooter } from '../components/PublicFooter'
 import { PageHero } from '../components/PageHero'
+import { API_URL } from '../lib/api'
+import { fetchPublicClasses, type PublicClassRow } from '../lib/publicContent'
 
-type Subject = 'Piano' | 'Guitar' | 'Vocal' | 'Drums'
-
-type ClassOffering = {
-  id: string
-  subject: Subject
-  name: string
-  level: 'Beginner' | 'Intermediate' | 'Advanced'
-  ageGroup: string
-  timing: string
-  image: string
-  featured: boolean
-}
-
-const subjects: Subject[] = ['Piano', 'Guitar', 'Vocal', 'Drums']
-
-const allClasses: ClassOffering[] = [
-  {
-    id: 'p1',
-    subject: 'Piano',
-    name: 'Beginner Piano',
-    level: 'Beginner',
-    ageGroup: 'Ages 6–12',
-    timing: 'Mon, Wed, Fri – 5 PM',
-    image: '/images/hero-keyboard.jpg',
-    featured: true,
-  },
-  {
-    id: 'p2',
-    subject: 'Piano',
-    name: 'Keys & Theory Lab',
-    level: 'Intermediate',
-    ageGroup: 'Ages 10–16',
-    timing: 'Tue, Thu – 4:30 PM',
-    image: '/images/music-class.jpg',
-    featured: false,
-  },
-  {
-    id: 'p3',
-    subject: 'Piano',
-    name: 'Performance Piano',
-    level: 'Advanced',
-    ageGroup: 'Ages 14+',
-    timing: 'Sat – 10 AM',
-    image: '/images/hero-keyboard.jpg',
-    featured: false,
-  },
-  {
-    id: 'g1',
-    subject: 'Guitar',
-    name: 'Beginner Guitar',
-    level: 'Beginner',
-    ageGroup: 'Ages 8–14',
-    timing: 'Tue, Thu – 5 PM',
-    image: '/images/music-class.jpg',
-    featured: true,
-  },
-  {
-    id: 'g2',
-    subject: 'Guitar',
-    name: 'Acoustic Ensemble',
-    level: 'Intermediate',
-    ageGroup: 'Ages 12+',
-    timing: 'Wed, Fri – 4 PM',
-    image: '/images/hero-violin.jpg',
-    featured: false,
-  },
-  {
-    id: 'g3',
-    subject: 'Guitar',
-    name: 'Lead & Rhythm Studio',
-    level: 'Advanced',
-    ageGroup: 'Ages 15+',
-    timing: 'Sat – 11 AM',
-    image: '/images/music-class.jpg',
-    featured: false,
-  },
-  {
-    id: 'v1',
-    subject: 'Vocal',
-    name: 'Beginner Vocal',
-    level: 'Beginner',
-    ageGroup: 'Ages 7–12',
-    timing: 'Mon, Wed – 4 PM',
-    image: '/images/hero-singing.jpg',
-    featured: true,
-  },
-  {
-    id: 'v2',
-    subject: 'Vocal',
-    name: 'Stage & Mic Skills',
-    level: 'Intermediate',
-    ageGroup: 'Ages 11–16',
-    timing: 'Tue, Thu – 5:30 PM',
-    image: '/images/hero-singing.jpg',
-    featured: false,
-  },
-  {
-    id: 'v3',
-    subject: 'Vocal',
-    name: 'Advanced Harmony',
-    level: 'Advanced',
-    ageGroup: 'Ages 14+',
-    timing: 'Fri – 5 PM',
-    image: '/images/music-class.jpg',
-    featured: false,
-  },
-  {
-    id: 'd1',
-    subject: 'Drums',
-    name: 'Drum Foundations',
-    level: 'Beginner',
-    ageGroup: 'Ages 8–13',
-    timing: 'Mon, Wed, Fri – 5 PM',
-    image: '/images/hero-drums.jpg',
-    featured: true,
-  },
-  {
-    id: 'd2',
-    subject: 'Drums',
-    name: 'Groove Builders',
-    level: 'Intermediate',
-    ageGroup: 'Ages 12+',
-    timing: 'Tue, Thu – 6 PM',
-    image: '/images/hero-drums.jpg',
-    featured: false,
-  },
-  {
-    id: 'd3',
-    subject: 'Drums',
-    name: 'Studio Session Drumming',
-    level: 'Advanced',
-    ageGroup: 'Ages 15+',
-    timing: 'Sat – 9 AM',
-    image: '/images/music-class.jpg',
-    featured: false,
-  },
-]
-
-function levelStyle(level: ClassOffering['level']) {
-  switch (level) {
-    case 'Beginner':
-      return 'text-primary/70'
-    case 'Intermediate':
-      return 'text-primary/80'
-    default:
-      return 'text-primary'
-  }
-}
-
-type ClassCardProps = {
-  item: ClassOffering
+function ClassCard({
+  item,
+  featured,
+}: {
+  item: PublicClassRow
   featured?: boolean
-}
-
-function ClassCard({ item, featured }: ClassCardProps) {
-  const imgHeight = featured ? 'min-h-[240px] md:min-h-[280px]' : 'min-h-[180px]'
+}) {
+  const title = (item.name || item.studio || `Class ${item.id}`).trim()
+  const sub = (item.subject || 'Music').trim()
+  const schedule = (item.studio || '').trim()
+  const live = Boolean(item.is_live)
 
   return (
     <article
@@ -167,33 +24,38 @@ function ClassCard({ item, featured }: ClassCardProps) {
         featured ? 'ring-2 ring-secondary/50 md:col-span-3' : ''
       }`}
     >
-      <div className={`relative -mx-4 -mt-4 mb-4 overflow-hidden rounded-t-2xl ${imgHeight}`}>
-        <img
-          src={item.image}
-          alt=""
-          className="h-full w-full object-cover"
-          width={featured ? 1200 : 400}
-          height={featured ? 400 : 240}
-        />
+      <div
+        className={`relative -mx-4 -mt-4 mb-4 flex min-h-[160px] items-center justify-center overflow-hidden rounded-t-2xl bg-gradient-to-br from-primary/15 to-primary/5 md:min-h-[200px] ${
+          featured ? 'md:min-h-[240px]' : ''
+        }`}
+      >
+        <span className="font-[family-name:var(--font-brand)] text-5xl font-bold text-primary/20 sm:text-6xl">
+          {sub.charAt(0).toUpperCase()}
+        </span>
+        {live ? (
+          <span className="absolute left-3 top-3 rounded-md bg-red-600 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-white shadow-sm">
+            Live
+          </span>
+        ) : null}
         {featured ? (
-          <span className="absolute left-3 top-3 rounded-md bg-secondary px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-primary shadow-sm">
-            Most Popular
+          <span className="absolute right-3 top-3 rounded-md bg-secondary px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-primary shadow-sm">
+            Featured
           </span>
         ) : null}
       </div>
-      <h3 className="text-lg font-bold text-primary">{item.name}</h3>
-      <p className={`mt-1 text-sm font-medium ${levelStyle(item.level)}`}>
-        <span className="text-primary/50">Level: </span>
-        {item.level}
+      <h3 className="text-lg font-bold text-primary">{title}</h3>
+      <p className="mt-1 text-sm font-medium text-primary/80">
+        <span className="text-primary/50">Subject: </span>
+        {sub}
       </p>
-      <p className="mt-2 text-sm text-primary/75">
-        <span className="font-medium text-primary/80">Age group: </span>
-        {item.ageGroup}
-      </p>
-      <p className="mt-1 text-sm text-primary/75">
-        <span className="font-medium text-primary/80">Timing: </span>
-        {item.timing}
-      </p>
+      {schedule ? (
+        <p className="mt-2 text-sm text-primary/75">
+          <span className="font-medium text-primary/80">Schedule / studio: </span>
+          {schedule}
+        </p>
+      ) : (
+        <p className="mt-2 text-sm text-primary/55">Schedule posted soon — contact us for times.</p>
+      )}
       <Link
         to="/admissions#admission-form"
         className="mt-4 flex w-full items-center justify-center rounded-lg bg-secondary py-2.5 text-sm font-semibold text-primary shadow-[0_4px_12px_rgba(212,175,55,0.3)] transition hover:bg-secondary-hover"
@@ -205,14 +67,58 @@ function ClassCard({ item, featured }: ClassCardProps) {
 }
 
 export function ClassesPage() {
-  const [activeSubject, setActiveSubject] = useState<Subject>('Piano')
+  const [classes, setClasses] = useState<PublicClassRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [activeSubject, setActiveSubject] = useState<string>('')
+
+  const load = useCallback(async () => {
+    if (!API_URL) {
+      setError('Set VITE_API_URL to load classes.')
+      setClasses([])
+      setLoading(false)
+      return
+    }
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await fetchPublicClasses()
+      setClasses(data)
+      const subs = [...new Set(data.map((c) => (c.subject || '').trim()).filter(Boolean))].sort()
+      setActiveSubject((prev) => {
+        if (prev && subs.includes(prev)) return prev
+        return subs[0] ?? ''
+      })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not load classes')
+      setClasses([])
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  const subjects = useMemo(() => {
+    const u = new Set<string>()
+    for (const c of classes) {
+      const s = (c.subject || '').trim()
+      if (s) u.add(s)
+    }
+    return [...u].sort()
+  }, [classes])
 
   const { featured, rest } = useMemo(() => {
-    const filtered = allClasses.filter((c) => c.subject === activeSubject)
-    const feat = filtered.find((c) => c.featured) ?? filtered[0]
-    const others = feat ? filtered.filter((c) => c.id !== feat.id) : []
+    const filtered = activeSubject
+      ? classes.filter((c) => (c.subject || '').trim() === activeSubject)
+      : classes
+    const liveFirst = [...filtered].sort((a, b) => Number(b.is_live) - Number(a.is_live))
+    const feat = liveFirst[0]
+    const others = feat ? liveFirst.filter((c) => c.id !== feat.id) : []
     return { featured: feat, rest: others }
-  }, [activeSubject])
+  }, [activeSubject, classes])
 
   return (
     <div className="min-h-dvh bg-surface font-sans text-primary">
@@ -225,40 +131,51 @@ export function ClassesPage() {
 
         <section className="px-4 py-10 sm:px-6 md:px-[60px] md:py-[60px]">
           <div className="mx-auto max-w-[1200px]">
-            <div
-              className="flex flex-wrap justify-center gap-3 md:justify-start"
-              role="tablist"
-              aria-label="Subject"
-            >
-              {subjects.map((s) => {
-                const active = s === activeSubject
-                return (
-                  <button
-                    key={s}
-                    type="button"
-                    role="tab"
-                    aria-selected={active}
-                    onClick={() => setActiveSubject(s)}
-                    className={`min-w-[100px] rounded-lg px-5 py-2.5 text-sm font-semibold transition ${
-                      active
-                        ? 'bg-secondary text-primary shadow-[0_4px_12px_rgba(212,175,55,0.25)]'
-                        : 'border border-primary bg-white text-primary hover:bg-primary/[0.04]'
-                    }`}
-                  >
-                    {s}
-                  </button>
-                )
-              })}
-            </div>
+            {error ? (
+              <p className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
+            ) : null}
+            {loading ? (
+              <p className="text-sm text-primary/60">Loading classes…</p>
+            ) : classes.length === 0 && !error ? (
+              <p className="rounded-2xl border border-primary/[0.08] bg-white p-8 text-center text-primary/70 shadow-[var(--shadow-card)]">
+                No classes published yet. Check back soon or contact us for availability.
+              </p>
+            ) : (
+              <>
+                <div
+                  className="flex flex-wrap justify-center gap-3 md:justify-start"
+                  role="tablist"
+                  aria-label="Subject"
+                >
+                  {subjects.map((s) => {
+                    const active = s === activeSubject
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        role="tab"
+                        aria-selected={active}
+                        onClick={() => setActiveSubject(s)}
+                        className={`min-w-[100px] rounded-lg px-5 py-2.5 text-sm font-semibold transition ${
+                          active
+                            ? 'bg-secondary text-primary shadow-[0_4px_12px_rgba(212,175,55,0.25)]'
+                            : 'border border-primary bg-white text-primary hover:bg-primary/[0.04]'
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    )
+                  })}
+                </div>
 
-            <div className="mt-10 grid gap-6 md:grid-cols-3">
-              {featured ? (
-                <ClassCard key={featured.id} item={featured} featured />
-              ) : null}
-              {rest.map((item) => (
-                <ClassCard key={item.id} item={item} />
-              ))}
-            </div>
+                <div className="mt-10 grid gap-6 md:grid-cols-3">
+                  {featured ? <ClassCard key={featured.id} item={featured} featured /> : null}
+                  {rest.map((item) => (
+                    <ClassCard key={item.id} item={item} />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </section>
 

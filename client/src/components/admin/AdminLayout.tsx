@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
+import { useSiteSettings } from '../../context/SettingsContext'
 import { AdminHeader } from './AdminHeader'
 import { AdminSidebar } from './AdminSidebar'
-import { RequireAdmin } from './RequireAdmin'
 
 const PAGE_TITLES: Record<string, string> = {
   '/admin': 'Home',
@@ -13,12 +13,15 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/performance': 'Performance',
   '/admin/gallery': 'Gallery',
   '/admin/enquiries': 'Enquiries',
-  '/admin/settings': 'Settings',
+  '/admin/settings': 'Site content',
 }
 
 export function AdminLayout() {
   const location = useLocation()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const { settings, loading: settingsLoading } = useSiteSettings()
+  const academy = settings?.academy_name?.trim() || ''
+  const brandName = settingsLoading && !academy ? '…' : academy || 'Academy'
 
   const pageTitle = useMemo(() => {
     const path = location.pathname.replace(/\/$/, '') || '/admin'
@@ -47,7 +50,7 @@ export function AdminLayout() {
             className="text-lg font-bold tracking-wide text-[#D4AF37]"
             style={{ fontFamily: 'var(--font-brand), Georgia, serif' }}
           >
-            G10 AMR
+            {brandName}
           </p>
           <p className="mt-1 text-sm font-medium text-white/70">Admin</p>
         </div>
@@ -60,9 +63,7 @@ export function AdminLayout() {
           onMenuClick={() => setMobileNavOpen(true)}
         />
         <main className="flex-1 bg-white p-6">
-          <RequireAdmin>
-            <Outlet />
-          </RequireAdmin>
+          <Outlet />
         </main>
       </div>
     </div>

@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import toast from 'react-hot-toast'
+import { EmptyState, EmptyStateIconPhotos } from '../../components/EmptyState'
 import { authHeaders } from '../../auth/authService'
-import { API_URL, apiUrl, resolveMediaUrl } from '../../lib/api'
+import { API_URL, resolveMediaUrl } from '../../lib/api'
+import { apiFetchData } from '../../lib/apiClient'
 
 type GalleryRow = {
   id: number
@@ -10,12 +13,6 @@ type GalleryRow = {
 }
 
 const CATEGORIES = ['classes', 'performances', 'studio'] as const
-
-async function readJson<T>(res: Response): Promise<T> {
-  const body = (await res.json()) as { success?: boolean; data?: T; error?: string }
-  if (!res.ok) throw new Error(body.error || res.statusText || 'Request failed')
-  return body.data as T
-}
 
 export function AdminGalleryAdminPage() {
   const formId = useId()
@@ -35,8 +32,7 @@ export function AdminGalleryAdminPage() {
       return
     }
     setError(null)
-    const res = await fetch(apiUrl('/api/gallery'))
-    const data = await readJson<GalleryRow[]>(res)
+    const data = await apiFetchData<GalleryRow[]>('/api/gallery')
     setItems(data)
   }, [])
 
@@ -65,7 +61,9 @@ export function AdminGalleryAdminPage() {
     if (!list?.length || !API_URL) return
     const file = list[0]
     if (!file.type.startsWith('image/')) {
-      setError('Please choose an image file.')
+      const msg = 'Please choose an image file.'
+      setError(msg)
+      toast.error(msg)
       return
     }
     setError(null)
@@ -75,12 +73,11 @@ export function AdminGalleryAdminPage() {
       fd.append('image', file)
       fd.append('caption', caption.trim() || file.name)
       fd.append('category', category)
-      const res = await fetch(apiUrl('/api/gallery/upload'), {
+      await apiFetchData<GalleryRow>('/api/gallery/upload', {
         method: 'POST',
         headers: authHeaders(),
         body: fd,
       })
-      await readJson<GalleryRow>(res)
       setCaption('')
       await load()
     } catch (err) {
@@ -96,7 +93,7 @@ export function AdminGalleryAdminPage() {
     setError(null)
     setSubmitting(true)
     try {
-      const res = await fetch(apiUrl('/api/gallery'), {
+      await apiFetchData<GalleryRow>('/api/gallery', {
         method: 'POST',
         headers: authHeaders(true),
         body: JSON.stringify({
@@ -105,12 +102,14 @@ export function AdminGalleryAdminPage() {
           category,
         }),
       })
-      await readJson<GalleryRow>(res)
       setImageUrl('')
       setCaption('')
       await load()
+      toast.success('Photo added successfully')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not add image')
+      const msg = err instanceof Error ? err.message : 'Error saving data'
+      setError(msg)
+      toast.error(msg)
     } finally {
       setSubmitting(false)
     }
@@ -121,14 +120,16 @@ export function AdminGalleryAdminPage() {
     setError(null)
     setSubmitting(true)
     try {
-      const res = await fetch(apiUrl(`/api/gallery/${id}`), {
+      await apiFetchData<{ id: number }>(`/api/gallery/${id}`, {
         method: 'DELETE',
         headers: authHeaders(),
       })
-      await readJson<{ id: number }>(res)
       await load()
+      toast.success('Photo deleted')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Delete failed')
+      const msg = err instanceof Error ? err.message : 'Error saving data'
+      setError(msg)
+      toast.error(msg)
     } finally {
       setSubmitting(false)
     }
@@ -231,10 +232,16 @@ export function AdminGalleryAdminPage() {
       ) : null}
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-primary/20 bg-surface/40 px-6 py-16 text-center">
-          <p className="text-base font-medium text-primary/70">No photos in the database yet.</p>
-          <p className="mt-2 text-sm text-primary/55">Upload a file or add an image URL above.</p>
-        </div>
+        <EmptyState
+          icon={<EmptyStateIconPhotos />}
+          title="No photos uploaded"
+          description="Upload a file or paste an image URL above. Photos appear on the public gallery page."
+          action={{
+            label: 'Upload photo',
+            onClick: openPicker,
+            disabled: submitting,
+          }}
+        />
       ) : (
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
           {items.map((img) => (

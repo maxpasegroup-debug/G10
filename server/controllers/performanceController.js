@@ -1,4 +1,5 @@
 const performanceModel = require('../models/performanceModel')
+const activityLogModel = require('../models/activityLogModel')
 
 async function list(req, res) {
   const studentId = req.query.student_id ?? req.query.studentId
@@ -22,6 +23,11 @@ async function create(req, res) {
     studentId: Number(studentId),
     score: String(score),
     remarks: remarks || null,
+  })
+  void activityLogModel.recordAction(req.user?.id, 'Performance updated', {
+    performance_id: row.id,
+    student_id: row.student_id,
+    score: row.score,
   })
   res.status(201).json({ success: true, data: row })
 }

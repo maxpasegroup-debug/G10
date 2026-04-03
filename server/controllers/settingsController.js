@@ -11,13 +11,29 @@ async function getPublic(req, res) {
 }
 
 async function update(req, res) {
-  const { academy_name, email, phone, address, map_embed_url } = req.body
+  const {
+    academy_name,
+    email,
+    phone,
+    address,
+    map_embed_url,
+    home_hero_title,
+    home_hero_subtitle,
+    about_text,
+    contact_intro,
+    admissions_message,
+  } = req.body
   const row = await settingsModel.updateSettings({
     academy_name,
     email,
     phone,
     address,
     map_embed_url,
+    home_hero_title,
+    home_hero_subtitle,
+    about_text,
+    contact_intro,
+    admissions_message,
   })
   if (!row) {
     const err = new Error('Site settings not configured')

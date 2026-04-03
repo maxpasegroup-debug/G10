@@ -8,7 +8,8 @@ import {
 } from 'recharts'
 import type { DotProps } from 'recharts'
 import { authHeaders } from '../../auth/authService'
-import { API_URL, apiUrl } from '../../lib/api'
+import { API_URL, resolveMediaUrl } from '../../lib/api'
+import { apiFetchData } from '../../lib/apiClient'
 
 type PerformanceBand =
   | 'Needs Improvement'
@@ -102,17 +103,6 @@ function attendancePercentForStudent(rows: AttendanceRow[], studentId: number): 
   return Math.round((counted / mine.length) * 100)
 }
 
-async function readApiJson<T>(res: Response): Promise<{ ok: boolean; data?: T; error?: string }> {
-  const body = (await res.json()) as { success?: boolean; data?: T; error?: string }
-  if (!res.ok) {
-    return { ok: false, error: body.error || res.statusText || 'Request failed' }
-  }
-  return { ok: true, data: body.data as T }
-}
-
-const PLACEHOLDER_PHOTO =
-  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=180&q=80&auto=format&fit=crop'
-
 export function PerformanceDashboard({ studentId, classId }: Props) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -141,25 +131,24 @@ export function PerformanceDashboard({ studentId, classId }: Props) {
       setError(null)
       try {
         const perfQ = new URLSearchParams({ student_id: String(studentId) })
-        const perfUrl = apiUrl(`/api/performance?${perfQ}`)
-        const perfRes = await fetch(perfUrl, { headers: authHeaders() })
-        const perfJson = await readApiJson<PerformanceRow[]>(perfRes)
-        if (!perfJson.ok) throw new Error(perfJson.error)
+        const performance = await apiFetchData<PerformanceRow[]>(`/api/performance?${perfQ}`, {
+          headers: authHeaders(),
+        })
 
         const attParams = new URLSearchParams({ student_id: String(studentId) })
         if (classId) attParams.set('class_id', String(classId))
-        const attRes = await fetch(apiUrl(`/api/attendance?${attParams}`), { headers: authHeaders() })
-        const attJson = await readApiJson<AttendanceRow[]>(attRes)
-        if (!attJson.ok) throw new Error(attJson.error)
+        const attendance = await apiFetchData<AttendanceRow[]>(`/api/attendance?${attParams}`, {
+          headers: authHeaders(),
+        })
 
-        const stRes = await fetch(apiUrl(`/api/students/${studentId}`), { headers: authHeaders() })
-        const stJson = await readApiJson<StudentApi>(stRes)
-        if (!stJson.ok) throw new Error(stJson.error)
+        const student = await apiFetchData<StudentApi | null>(`/api/students/${studentId}`, {
+          headers: authHeaders(),
+        })
 
         if (cancelled) return
-        setPerformance(perfJson.data ?? [])
-        setAttendance(attJson.data ?? [])
-        setStudent(stJson.data ?? null)
+        setPerformance(performance ?? [])
+        setAttendance(attendance ?? [])
+        setStudent(student ?? null)
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : 'Could not load data')
@@ -190,7 +179,7 @@ export function PerformanceDashboard({ studentId, classId }: Props) {
     const pct = attendancePercentForStudent(attendance, studentId)
     return {
       name: student.name || 'Student',
-      photo: student.photo || PLACEHOLDER_PHOTO,
+      photoUrl: student.photo ? resolveMediaUrl(student.photo) : null,
       subject: student.subject || '—',
       attendancePct: pct,
       band,
@@ -241,11 +230,20 @@ export function PerformanceDashboard({ studentId, classId }: Props) {
         <article className="rounded-[12px] border border-primary/[0.08] bg-white p-5 shadow-[var(--shadow-card)] md:col-span-2 xl:col-span-3">
           <div className="flex flex-wrap items-center gap-6">
             <div className="flex items-center gap-3">
-              <img
-                src={view.photo}
-                alt={view.name}
-                className="h-12 w-12 rounded-full object-cover ring-2 ring-primary/10"
-              />
+              {view.photoUrl ? (
+                <img
+                  src={view.photoUrl}
+                  alt={view.name}
+                  className="h-12 w-12 rounded-full object-cover ring-2 ring-primary/10"
+                />
+              ) : (
+                <div
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary/45 ring-2 ring-primary/10"
+                  aria-hidden
+                >
+                  {(view.name || '?').charAt(0).toUpperCase()}
+                </div>
+              )}
               <div className="min-w-0">
                 <h3 className="truncate text-base font-semibold text-primary">{view.name}</h3>
                 <p className="text-sm text-primary/55">Attendance {view.attendancePct}%</p>

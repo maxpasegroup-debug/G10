@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import toast from 'react-hot-toast'
 import { authHeaders } from '../../auth/authService'
-import { API_URL, apiUrl } from '../../lib/api'
+import { API_URL } from '../../lib/api'
+import { apiFetchData } from '../../lib/apiClient'
 
 type AttendanceStatus = 'present' | 'absent' | 'late'
 
@@ -30,12 +32,6 @@ function apiStatus(s: AttendanceStatus): string {
   return 'Late'
 }
 
-async function readJson<T>(res: Response): Promise<T> {
-  const body = (await res.json()) as { success?: boolean; data?: T; error?: string }
-  if (!res.ok) throw new Error(body.error || res.statusText || 'Request failed')
-  return body.data as T
-}
-
 export function AdminAttendancePage() {
   const [classes, setClasses] = useState<ClassRow[]>([])
   const [students, setStudents] = useState<StudentRow[]>([])
@@ -50,8 +46,7 @@ export function AdminAttendancePage() {
 
   const loadClasses = useCallback(async () => {
     if (!API_URL) return
-    const res = await fetch(apiUrl('/api/classes'), { headers: authHeaders() })
-    const list = await readJson<ClassRow[]>(res)
+    const list = await apiFetchData<ClassRow[]>('/api/classes', { headers: authHeaders() })
     setClasses(list)
     setClassId((prev) => prev || (list[0] ? String(list[0].id) : ''))
   }, [])
@@ -61,12 +56,12 @@ export function AdminAttendancePage() {
       setStudents([])
       return
     }
-    const [stRes, attRes] = await Promise.all([
-      fetch(apiUrl(`/api/students?class_id=${cid}`), { headers: authHeaders() }),
-      fetch(apiUrl(`/api/attendance?class_id=${cid}&date=${d}`), { headers: authHeaders() }),
+    const [roster, att] = await Promise.all([
+      apiFetchData<StudentRow[]>(`/api/students?class_id=${cid}`, { headers: authHeaders() }),
+      apiFetchData<AttendanceRow[]>(`/api/attendance?class_id=${cid}&date=${d}`, {
+        headers: authHeaders(),
+      }),
     ])
-    const roster = await readJson<StudentRow[]>(stRes)
-    const att = await readJson<AttendanceRow[]>(attRes)
     setStudents(roster)
     const next: Record<string, AttendanceStatus> = {}
     for (const row of att) {
@@ -148,7 +143,7 @@ export function AdminAttendancePage() {
       for (const s of students) {
         const st = statusByStudent[String(s.id)]
         if (!st) continue
-        const res = await fetch(apiUrl('/api/attendance'), {
+        await apiFetchData<unknown>('/api/attendance', {
           method: 'POST',
           headers: authHeaders(true),
           body: JSON.stringify({
@@ -157,7 +152,6 @@ export function AdminAttendancePage() {
             status: apiStatus(st),
           }),
         })
-        await readJson(res)
         marked += 1
       }
       const total = students.length
@@ -166,8 +160,15 @@ export function AdminAttendancePage() {
           ? `Saved for ${activeClass?.name ?? 'class'} · ${date}`
           : `Saved (${marked} of ${total} marked) · ${date}`,
       )
+      if (marked > 0) {
+        toast.success('Attendance saved')
+      } else {
+        toast('No attendance marks to save yet.')
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Save failed')
+      const msg = e instanceof Error ? e.message : 'Error saving data'
+      setError(msg)
+      toast.error(msg)
     } finally {
       setSaving(false)
     }

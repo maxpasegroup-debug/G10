@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { authHeaders } from '../../auth/authService'
-import { API_URL, apiUrl } from '../../lib/api'
+import { API_URL } from '../../lib/api'
+import { apiFetchData } from '../../lib/apiClient'
 
 type ClassRow = {
   id: number
@@ -15,23 +16,6 @@ type SubjectFilter = string
 
 const ALL_STUDIOS = 'All studios'
 const ALL_SUBJECTS = 'All subjects'
-
-const FALLBACK_IMAGES = [
-  'https://images.unsplash.com/photo-1514119412350-e174d90d280e?w=1200&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=1200&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1200&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1519892300165-cb5582e4c7d2?w=1200&q=80&auto=format&fit=crop',
-]
-
-function imageForClass(id: number): string {
-  return FALLBACK_IMAGES[Math.abs(id) % FALLBACK_IMAGES.length]
-}
-
-async function readList<T>(res: Response): Promise<T> {
-  const body = (await res.json()) as { success?: boolean; data?: T; error?: string }
-  if (!res.ok) throw new Error(body.error || res.statusText || 'Request failed')
-  return body.data as T
-}
 
 export function LiveClassroomDashboard() {
   const [loading, setLoading] = useState(true)
@@ -52,8 +36,7 @@ export function LiveClassroomDashboard() {
       setLoading(true)
       setError(null)
       try {
-        const res = await fetch(apiUrl('/api/classes'), { headers: authHeaders() })
-        const data = await readList<ClassRow[]>(res)
+        const data = await apiFetchData<ClassRow[]>('/api/classes', { headers: authHeaders() })
         if (cancelled) return
         setClasses(data)
       } catch (e) {
@@ -166,7 +149,7 @@ export function LiveClassroomDashboard() {
           filtered.map((c) => {
             const title = (c.studio || c.name || `Class ${c.id}`).trim()
             const sub = (c.subject || 'Session').trim()
-            const image = imageForClass(c.id)
+            const initial = sub.charAt(0).toUpperCase() || String(c.id)
             const live = Boolean(c.is_live)
             return (
               <article
@@ -175,8 +158,13 @@ export function LiveClassroomDashboard() {
                   live ? 'border-secondary ring-2 ring-secondary/35' : 'border-primary/[0.08]'
                 }`}
               >
-                <div className="relative aspect-video bg-primary/10">
-                  <img src={image} alt={title} className="h-full w-full object-cover" />
+                <div className="relative flex aspect-video items-center justify-center bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5">
+                  <span
+                    className="font-[family-name:var(--font-brand)] text-5xl font-bold text-primary/20"
+                    aria-hidden
+                  >
+                    {initial}
+                  </span>
                   {live ? (
                     <span className="absolute left-3 top-3 rounded-full bg-red-600 px-2.5 py-1 text-[11px] font-bold tracking-wider text-white shadow-sm">
                       LIVE

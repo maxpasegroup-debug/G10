@@ -1,4 +1,5 @@
 const attendanceModel = require('../models/attendanceModel')
+const activityLogModel = require('../models/activityLogModel')
 
 async function list(req, res) {
   const studentId = req.query.student_id ?? req.query.studentId
@@ -24,6 +25,12 @@ async function create(req, res) {
     studentId: Number(studentId),
     date,
     status,
+  })
+  void activityLogModel.recordAction(req.user?.id, 'Attendance saved', {
+    attendance_id: row.id,
+    student_id: row.student_id,
+    date: row.date,
+    status: row.status,
   })
   res.status(201).json({ success: true, data: row })
 }

@@ -4,6 +4,9 @@ CREATE TABLE users (
   email TEXT UNIQUE,
   password TEXT,
   role TEXT,
+  title TEXT,
+  bio TEXT,
+  photo_url TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -52,7 +55,12 @@ CREATE TABLE site_settings (
   email TEXT NOT NULL DEFAULT '',
   phone TEXT NOT NULL DEFAULT '',
   address TEXT NOT NULL DEFAULT '',
-  map_embed_url TEXT
+  map_embed_url TEXT,
+  home_hero_title TEXT NOT NULL DEFAULT '',
+  home_hero_subtitle TEXT NOT NULL DEFAULT '',
+  about_text TEXT NOT NULL DEFAULT '',
+  contact_intro TEXT NOT NULL DEFAULT '',
+  admissions_message TEXT NOT NULL DEFAULT ''
 );
 
 INSERT INTO site_settings (id, academy_name, email, phone, address, map_embed_url)
@@ -82,4 +90,11 @@ CREATE TABLE gallery_items (
   sort_order INT NOT NULL DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT gallery_items_category_check CHECK (category IN ('classes', 'performances', 'studio'))
+);
+
+CREATE TABLE activity_logs (
+  id SERIAL PRIMARY KEY,
+  action TEXT NOT NULL,
+  user_id INT REFERENCES users (id) ON DELETE SET NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

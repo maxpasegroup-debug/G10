@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
+import toast from 'react-hot-toast'
+import { EmptyState, EmptyStateIconEnquiries } from '../../components/EmptyState'
 import { authHeaders } from '../../auth/authService'
-import { API_URL, apiUrl } from '../../lib/api'
+import { API_URL } from '../../lib/api'
+import { apiFetchData } from '../../lib/apiClient'
 
 type EnquiryRow = {
   id: number
@@ -9,12 +12,6 @@ type EnquiryRow = {
   course: string
   age: string | null
   created_at: string
-}
-
-async function readList<T>(res: Response): Promise<T> {
-  const body = (await res.json()) as { success?: boolean; data?: T; error?: string }
-  if (!res.ok) throw new Error(body.error || res.statusText || 'Request failed')
-  return body.data as T
 }
 
 function formatWhen(iso: string) {
@@ -38,8 +35,7 @@ export function AdminEnquiriesPage() {
       return
     }
     setError(null)
-    const res = await fetch(apiUrl('/api/enquiries'), { headers: authHeaders() })
-    const data = await readList<EnquiryRow[]>(res)
+    const data = await apiFetchData<EnquiryRow[]>('/api/enquiries', { headers: authHeaders() })
     setRows(data)
   }, [])
 
@@ -50,7 +46,11 @@ export function AdminEnquiriesPage() {
       try {
         await load()
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : 'Could not load enquiries')
+        if (!cancelled) {
+          const msg = e instanceof Error ? e.message : 'Could not load enquiries'
+          setError(msg)
+          toast.error(msg)
+        }
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -74,9 +74,21 @@ export function AdminEnquiriesPage() {
       {loading ? (
         <p className="text-primary/60">Loading…</p>
       ) : rows.length === 0 ? (
-        <p className="rounded-2xl border border-primary/[0.08] bg-white p-8 text-center text-base text-primary/55 shadow-[var(--shadow-card)]">
-          No enquiries yet.
-        </p>
+        <EmptyState
+          icon={<EmptyStateIconEnquiries />}
+          title="No enquiries yet"
+          description="Admission form submissions will show up here when parents and students reach out."
+          action={{
+            label: 'Refresh',
+            onClick: () =>
+              void load().catch((e) => {
+                const msg = e instanceof Error ? e.message : 'Error saving data'
+                setError(msg)
+                toast.error(msg)
+              }),
+            variant: 'secondary',
+          }}
+        />
       ) : (
         <ul className="space-y-4">
           {rows.map((r) => (

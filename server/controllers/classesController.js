@@ -1,4 +1,5 @@
 const classModel = require('../models/classModel')
+const activityLogModel = require('../models/activityLogModel')
 
 async function list(req, res) {
   const classes = await classModel.listClasses()
@@ -27,6 +28,11 @@ async function create(req, res) {
     subject: subject || null,
     studio: studio || null,
     isLive: Boolean(isLive),
+  })
+  void activityLogModel.recordAction(req.user?.id, 'Class created', {
+    class_id: row.id,
+    name: row.name,
+    subject: row.subject ?? '',
   })
   res.status(201).json({ success: true, data: row })
 }

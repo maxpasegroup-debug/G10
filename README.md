@@ -28,7 +28,11 @@ npm run dev:server
 
 ## Database
 
-Run `server/db/schema.sql` in your PostgreSQL (e.g. Railway SQL console).
+Run `server/db/schema.sql` in your PostgreSQL (e.g. Railway SQL console). If the database already exists, apply new columns from `server/db/migrations/` in order (e.g. `010_site_settings_cms.sql` adds public CMS fields on `site_settings`; `011_activity_logs.sql` adds admin audit logging).
+
+### Back up your database (recommended)
+
+See **[docs/DATABASE_BACKUPS.md](docs/DATABASE_BACKUPS.md)** for `pg_dump` / restore and optional Railway or GitHub Actions cron.
 
 ## Production build (client)
 

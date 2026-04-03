@@ -1,4 +1,5 @@
 const studentModel = require('../models/studentModel')
+const activityLogModel = require('../models/activityLogModel')
 
 async function list(req, res) {
   const classId = req.query.class_id ?? req.query.classId
@@ -35,6 +36,11 @@ async function create(req, res) {
     photo: photo || null,
     subject: subject || null,
     classId: Number.isFinite(classIdNum) ? classIdNum : null,
+  })
+  void activityLogModel.recordAction(req.user?.id, 'Student added', {
+    student_id: student.id,
+    name: student.name,
+    class_id: student.class_id ?? '',
   })
   res.status(201).json({ success: true, data: student })
 }

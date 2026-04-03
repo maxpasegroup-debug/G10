@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useId, useState, type FormEvent } from 'react'
+import toast from 'react-hot-toast'
 import { authHeaders } from '../../auth/authService'
 import type { UserRole } from '../../auth/types'
-import { API_URL, apiUrl } from '../../lib/api'
+import { API_URL } from '../../lib/api'
+import { apiFetchData } from '../../lib/apiClient'
 
 type UserRow = {
   id: number
@@ -18,19 +20,12 @@ const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
   { value: 'admin', label: 'Admin' },
 ]
 
-async function readJson<T>(res: Response): Promise<T> {
-  const body = (await res.json()) as { success?: boolean; data?: T; error?: string }
-  if (!res.ok) throw new Error(body.error || res.statusText || 'Request failed')
-  return body.data as T
-}
-
 export function AdminUsersPage() {
   const formId = useId()
   const [users, setUsers] = useState<UserRow[]>([])
   const [loading, setLoading] = useState(true)
   const [listError, setListError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
-  const [formSuccess, setFormSuccess] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const [name, setName] = useState('')
@@ -48,8 +43,7 @@ export function AdminUsersPage() {
       return
     }
     setListError(null)
-    const res = await fetch(apiUrl('/api/users'), { headers: authHeaders() })
-    const data = await readJson<UserRow[]>(res)
+    const data = await apiFetchData<UserRow[]>('/api/users', { headers: authHeaders() })
     setUsers(data)
   }, [])
 
@@ -74,14 +68,13 @@ export function AdminUsersPage() {
   async function handleCreate(e: FormEvent) {
     e.preventDefault()
     setFormError(null)
-    setFormSuccess(null)
     if (!API_URL) {
       setFormError('VITE_API_URL is not set.')
       return
     }
     setSubmitting(true)
     try {
-      const res = await fetch(apiUrl('/api/users'), {
+      await apiFetchData<{ user: UserRow }>('/api/users', {
         method: 'POST',
         headers: authHeaders(true),
         body: JSON.stringify({
@@ -91,15 +84,16 @@ export function AdminUsersPage() {
           role,
         }),
       })
-      await readJson<{ user: UserRow }>(res)
-      setFormSuccess(`Created account for ${email.trim()}`)
       setName('')
       setEmail('')
       setPassword('')
       setRole('student')
       await loadUsers()
+      toast.success('User created successfully')
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Could not create user')
+      const msg = err instanceof Error ? err.message : 'Error saving data'
+      setFormError(msg)
+      toast.error(msg)
     } finally {
       setSubmitting(false)
     }
@@ -109,16 +103,18 @@ export function AdminUsersPage() {
     if (!deleteTarget || !API_URL) return
     setDeleteBusy(true)
     try {
-      const res = await fetch(apiUrl(`/api/users/${deleteTarget.id}`), {
+      await apiFetchData<{ id: number }>(`/api/users/${deleteTarget.id}`, {
         method: 'DELETE',
         headers: authHeaders(),
       })
-      await readJson<{ id: number }>(res)
       setDeleteTarget(null)
       await loadUsers()
+      toast.success('User deleted successfully')
     } catch (e) {
-      setListError(e instanceof Error ? e.message : 'Could not delete user')
+      const msg = e instanceof Error ? e.message : 'Error saving data'
+      setListError(msg)
       setDeleteTarget(null)
+      toast.error(msg)
     } finally {
       setDeleteBusy(false)
     }
@@ -142,11 +138,6 @@ export function AdminUsersPage() {
 
           {formError ? (
             <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{formError}</p>
-          ) : null}
-          {formSuccess ? (
-            <p className="rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
-              {formSuccess}
-            </p>
           ) : null}
 
           <div>

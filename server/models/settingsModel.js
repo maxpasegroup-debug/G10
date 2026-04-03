@@ -1,11 +1,21 @@
 const pool = require('../config/db')
 
-const ALLOWED_KEYS = ['academy_name', 'email', 'phone', 'address', 'map_embed_url']
+const ALLOWED_KEYS = [
+  'academy_name',
+  'email',
+  'phone',
+  'address',
+  'map_embed_url',
+  'home_hero_title',
+  'home_hero_subtitle',
+  'about_text',
+  'contact_intro',
+  'admissions_message',
+]
 
 async function getPublicSettings() {
   const { rows } = await pool.query(
-    `SELECT academy_name, email, phone, address, map_embed_url
-     FROM site_settings WHERE id = 1`,
+    `SELECT ${ALLOWED_KEYS.join(', ')} FROM site_settings WHERE id = 1`,
   )
   return rows[0] || null
 }
@@ -26,7 +36,7 @@ async function updateSettings(patch) {
   values.push(1)
   const { rows } = await pool.query(
     `UPDATE site_settings SET ${sets.join(', ')} WHERE id = $${values.length}
-     RETURNING academy_name, email, phone, address, map_embed_url`,
+     RETURNING ${ALLOWED_KEYS.join(', ')}`,
     values,
   )
   return rows[0] || null

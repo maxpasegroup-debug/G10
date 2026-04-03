@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import toast from 'react-hot-toast'
 import { authHeaders } from '../../auth/authService'
-import { API_URL, apiUrl } from '../../lib/api'
+import { API_URL } from '../../lib/api'
+import { apiFetchData } from '../../lib/apiClient'
 
 type PerformanceBand = 'needs_improvement' | 'ok' | 'good' | 'perfect' | 'special'
 
@@ -60,12 +62,6 @@ const bands: {
   },
 ]
 
-async function readJson<T>(res: Response): Promise<T> {
-  const body = (await res.json()) as { success?: boolean; data?: T; error?: string }
-  if (!res.ok) throw new Error(body.error || res.statusText || 'Request failed')
-  return body.data as T
-}
-
 export function AdminPerformancePage() {
   const [students, setStudents] = useState<StudentRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -83,8 +79,7 @@ export function AdminPerformancePage() {
       setLoadError('VITE_API_URL is not set')
       return
     }
-    const res = await fetch(apiUrl('/api/students'), { headers: authHeaders() })
-    const list = await readJson<StudentRow[]>(res)
+    const list = await apiFetchData<StudentRow[]>('/api/students', { headers: authHeaders() })
     setStudents(list)
     setStudentId((prev) => prev || (list[0] ? String(list[0].id) : ''))
   }, [])
@@ -141,7 +136,7 @@ export function AdminPerformancePage() {
     setSaveError(null)
     try {
       const score = `${bandToScore[band]} · ${subject.name}`
-      const res = await fetch(apiUrl('/api/performance'), {
+      await apiFetchData<{ id: number }>('/api/performance', {
         method: 'POST',
         headers: authHeaders(true),
         body: JSON.stringify({
@@ -150,13 +145,15 @@ export function AdminPerformancePage() {
           remarks: remark.trim() || null,
         }),
       })
-      await readJson<{ id: number }>(res)
       const bandLabel = bands.find((x) => x.id === band)?.label ?? band
       setSavedHint(`Saved · ${student.name ?? ''} · ${subject.name} · ${bandLabel}`)
       setRemark('')
       setBand(null)
+      toast.success('Performance saved successfully')
     } catch (e) {
-      setSaveError(e instanceof Error ? e.message : 'Save failed')
+      const msg = e instanceof Error ? e.message : 'Error saving data'
+      setSaveError(msg)
+      toast.error(msg)
     } finally {
       setSaving(false)
     }

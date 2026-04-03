@@ -1,13 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { authHeaders } from '../../auth/authService'
-import { API_URL, apiUrl } from '../../lib/api'
-
-async function readList(res: Response): Promise<unknown[]> {
-  const body = (await res.json()) as { success?: boolean; data?: unknown[]; error?: string }
-  if (!res.ok) throw new Error(body.error || res.statusText || 'Request failed')
-  return (body.data ?? []) as unknown[]
-}
+import { API_URL } from '../../lib/api'
+import { apiFetchData } from '../../lib/apiClient'
 
 export function AdminHomePage() {
   const [studentCount, setStudentCount] = useState<number | null>(null)
@@ -26,15 +21,13 @@ export function AdminHomePage() {
       setSummaryLoading(true)
       setLoadError(null)
       try {
-        const [sRes, cRes] = await Promise.all([
-          fetch(apiUrl('/api/students'), { headers: authHeaders() }),
-          fetch(apiUrl('/api/classes'), { headers: authHeaders() }),
+        const [students, classes] = await Promise.all([
+          apiFetchData<unknown[]>('/api/students', { headers: authHeaders() }),
+          apiFetchData<unknown[]>('/api/classes', { headers: authHeaders() }),
         ])
-        const students = await readList(sRes)
-        const classes = await readList(cRes)
         if (!cancelled) {
-          setStudentCount(students.length)
-          setClassCount(classes.length)
+          setStudentCount((students ?? []).length)
+          setClassCount((classes ?? []).length)
         }
       } catch (e) {
         if (!cancelled) setLoadError(e instanceof Error ? e.message : 'Could not load summary')

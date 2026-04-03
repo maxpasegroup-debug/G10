@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
-import { clearStoredToken } from '../../auth/authService'
+import { NavLink } from 'react-router-dom'
+import { logout } from '../../auth/authService'
 
 const items: { to: string; label: string; end?: boolean; icon: ReactNode }[] = [
   {
@@ -67,7 +67,7 @@ const items: { to: string; label: string; end?: boolean; icon: ReactNode }[] = [
   },
   {
     to: '/admin/settings',
-    label: 'Settings',
+    label: 'Site content',
     icon: (
       <>
         <path
@@ -87,12 +87,9 @@ type AdminSidebarProps = {
 }
 
 export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
-  const navigate = useNavigate()
-
   function handleLogout() {
-    clearStoredToken()
     onNavigate?.()
-    navigate('/login', { replace: true })
+    logout()
   }
 
   return (

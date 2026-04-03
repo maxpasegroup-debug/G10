@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useId, useMemo, useState, type FormEvent } from 'react'
+import toast from 'react-hot-toast'
+import { EmptyState, EmptyStateIconStudents } from '../../components/EmptyState'
 import { authHeaders } from '../../auth/authService'
-import { API_URL, apiUrl } from '../../lib/api'
+import { API_URL, resolveMediaUrl } from '../../lib/api'
+import { apiFetchData } from '../../lib/apiClient'
 
 type StudentRow = {
   id: number
@@ -10,15 +13,7 @@ type StudentRow = {
   class_id: number | null
 }
 
-type ClassOption = { id: number; name: string | null }
-
-const courseOptions = ['Piano', 'Guitar', 'Vocal', 'Drums'] as const
-
-async function readJson<T>(res: Response): Promise<T> {
-  const body = (await res.json()) as { success?: boolean; data?: T; error?: string }
-  if (!res.ok) throw new Error(body.error || res.statusText || 'Request failed')
-  return body.data as T
-}
+type ClassOption = { id: number; name: string | null; subject: string | null }
 
 export function AdminStudentsPage() {
   const formId = useId()
@@ -34,7 +29,7 @@ export function AdminStudentsPage() {
   const [viewId, setViewId] = useState<number | null>(null)
 
   const [formName, setFormName] = useState('')
-  const [formSubject, setFormSubject] = useState<string>(courseOptions[0])
+  const [formSubject, setFormSubject] = useState<string>('General')
   const [formPhotoUrl, setFormPhotoUrl] = useState('')
   const [formClassId, setFormClassId] = useState<string>('')
 
@@ -45,12 +40,10 @@ export function AdminStudentsPage() {
       return
     }
     setListError(null)
-    const [sRes, cRes] = await Promise.all([
-      fetch(apiUrl('/api/students'), { headers: authHeaders() }),
-      fetch(apiUrl('/api/classes'), { headers: authHeaders() }),
+    const [list, cls] = await Promise.all([
+      apiFetchData<StudentRow[]>('/api/students', { headers: authHeaders() }),
+      apiFetchData<ClassOption[]>('/api/classes', { headers: authHeaders() }),
     ])
-    const list = await readJson<StudentRow[]>(sRes)
-    const cls = await readJson<ClassOption[]>(cRes)
     setStudents(list)
     setClasses(cls)
   }, [])
@@ -78,12 +71,33 @@ export function AdminStudentsPage() {
     [viewId, students],
   )
 
+  const subjectOptions = useMemo(() => {
+    const set = new Set<string>()
+    for (const c of classes) {
+      const x = (c.subject ?? '').trim()
+      if (x) set.add(x)
+    }
+    for (const st of students) {
+      const x = (st.subject ?? '').trim()
+      if (x) set.add(x)
+    }
+    return [...set].sort()
+  }, [classes, students])
+
+  const subjectSelectOptions = useMemo(() => {
+    const set = new Set(subjectOptions)
+    const cur = formSubject.trim()
+    if (panelOpen && cur) set.add(cur)
+    const arr = [...set].sort()
+    return arr.length > 0 ? arr : ['General']
+  }, [subjectOptions, panelOpen, formSubject])
+
   const resetForm = useCallback(() => {
     setFormName('')
-    setFormSubject(courseOptions[0])
+    setFormSubject(subjectOptions[0] ?? 'General')
     setFormPhotoUrl('')
     setFormClassId('')
-  }, [])
+  }, [subjectOptions])
 
   const openAdd = useCallback(() => {
     setMode('add')
@@ -98,14 +112,12 @@ export function AdminStudentsPage() {
       setMode('edit')
       setActiveId(s.id)
       setFormName(s.name || '')
-      setFormSubject((s.subject && courseOptions.includes(s.subject as (typeof courseOptions)[number])
-        ? s.subject
-        : courseOptions[0]) as string)
+      setFormSubject((s.subject || '').trim() || subjectOptions[0] || 'General')
       setFormPhotoUrl(s.photo || '')
       setFormClassId(s.class_id != null ? String(s.class_id) : '')
       setPanelOpen(true)
     },
-    [],
+    [subjectOptions],
   )
 
   const closePanel = useCallback(() => {
@@ -129,34 +141,32 @@ export function AdminStudentsPage() {
     }
     try {
       if (mode === 'add') {
-        const res = await fetch(apiUrl('/api/students'), {
+        await apiFetchData<StudentRow>('/api/students', {
           method: 'POST',
           headers: authHeaders(true),
           body: JSON.stringify(payload),
         })
-        await readJson<StudentRow>(res)
       } else if (activeId != null) {
-        const res = await fetch(apiUrl(`/api/students/${activeId}`), {
+        await apiFetchData<StudentRow>(`/api/students/${activeId}`, {
           method: 'PATCH',
           headers: authHeaders(true),
           body: JSON.stringify(payload),
         })
-        await readJson<StudentRow>(res)
       }
       setPanelOpen(false)
       setFormError(null)
       resetForm()
       setActiveId(null)
       await load()
+      toast.success(mode === 'add' ? 'Student added successfully' : 'Student updated successfully')
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Save failed')
+      const msg = err instanceof Error ? err.message : 'Error saving data'
+      setFormError(msg)
+      toast.error(msg)
     } finally {
       setSubmitting(false)
     }
   }
-
-  const photoFallback =
-    'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80&auto=format&fit=crop'
 
   if (loading) {
     return <p className="text-primary/60">Loading students…</p>
@@ -179,46 +189,68 @@ export function AdminStudentsPage() {
         </button>
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-        {students.map((student) => (
-          <article
-            key={student.id}
-            className="flex flex-col overflow-hidden rounded-2xl border border-primary/[0.08] bg-white shadow-[var(--shadow-card)]"
-          >
-            <div className="flex items-start gap-4 p-5">
-              <img
-                src={student.photo || photoFallback}
-                alt=""
-                className="h-20 w-20 shrink-0 rounded-2xl object-cover ring-2 ring-primary/[0.06]"
-                width={80}
-                height={80}
-              />
-              <div className="min-w-0 flex-1">
-                <h3 className="text-lg font-bold text-primary">{student.name}</h3>
-                <p className="mt-1 text-sm font-medium text-secondary">{student.subject || '—'}</p>
+      {!listError && students.length === 0 ? (
+        <EmptyState
+          icon={<EmptyStateIconStudents />}
+          title="No students yet"
+          description="Add your first student to start tracking profiles, attendance, and progress."
+          action={{
+            label: 'Add student',
+            onClick: openAdd,
+            disabled: submitting,
+          }}
+        />
+      ) : students.length > 0 ? (
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {students.map((student) => (
+            <article
+              key={student.id}
+              className="flex flex-col overflow-hidden rounded-2xl border border-primary/[0.08] bg-white shadow-[var(--shadow-card)]"
+            >
+              <div className="flex items-start gap-4 p-5">
+                {student.photo ? (
+                  <img
+                    src={resolveMediaUrl(student.photo)}
+                    alt=""
+                    className="h-20 w-20 shrink-0 rounded-2xl object-cover ring-2 ring-primary/[0.06]"
+                    width={80}
+                    height={80}
+                  />
+                ) : (
+                  <div
+                    className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-xl font-bold text-primary/40 ring-2 ring-primary/[0.06]"
+                    aria-hidden
+                  >
+                    {(student.name || '?').charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-lg font-bold text-primary">{student.name}</h3>
+                  <p className="mt-1 text-sm font-medium text-secondary">{student.subject || '—'}</p>
+                </div>
               </div>
-            </div>
-            <div className="mt-auto flex gap-3 border-t border-primary/[0.08] p-4">
-              <button
-                type="button"
-                onClick={() => setViewId(student.id)}
-                disabled={submitting}
-                className="min-h-[44px] flex-1 rounded-xl border border-primary/20 bg-white py-2.5 text-sm font-bold text-primary transition hover:bg-primary/[0.04] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                View
-              </button>
-              <button
-                type="button"
-                onClick={() => openEdit(student)}
-                disabled={submitting}
-                className="min-h-[44px] flex-1 rounded-xl bg-primary py-2.5 text-sm font-bold text-white transition hover:bg-primary-light disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Edit
-              </button>
-            </div>
-          </article>
-        ))}
-      </div>
+              <div className="mt-auto flex gap-3 border-t border-primary/[0.08] p-4">
+                <button
+                  type="button"
+                  onClick={() => setViewId(student.id)}
+                  disabled={submitting}
+                  className="min-h-[44px] flex-1 rounded-xl border border-primary/20 bg-white py-2.5 text-sm font-bold text-primary transition hover:bg-primary/[0.04] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  View
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openEdit(student)}
+                  disabled={submitting}
+                  className="min-h-[44px] flex-1 rounded-xl bg-primary py-2.5 text-sm font-bold text-white transition hover:bg-primary-light disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Edit
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : null}
 
       {panelOpen ? (
         <div
@@ -276,7 +308,7 @@ export function AdminStudentsPage() {
                   disabled={submitting}
                   className="w-full rounded-xl border border-primary/[0.12] px-4 py-3.5 text-base text-primary outline-none ring-secondary/30 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {courseOptions.map((c) => (
+                  {subjectSelectOptions.map((c) => (
                     <option key={c} value={c}>
                       {c}
                     </option>
@@ -341,11 +373,20 @@ export function AdminStudentsPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-4">
-              <img
-                src={activeStudent.photo || photoFallback}
-                alt=""
-                className="h-24 w-24 rounded-2xl object-cover ring-2 ring-primary/[0.08]"
-              />
+              {activeStudent.photo ? (
+                <img
+                  src={resolveMediaUrl(activeStudent.photo)}
+                  alt=""
+                  className="h-24 w-24 rounded-2xl object-cover ring-2 ring-primary/[0.08]"
+                />
+              ) : (
+                <div
+                  className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-2xl font-bold text-primary/40 ring-2 ring-primary/[0.08]"
+                  aria-hidden
+                >
+                  {(activeStudent.name || '?').charAt(0).toUpperCase()}
+                </div>
+              )}
               <div>
                 <h3 className="text-xl font-bold text-primary">{activeStudent.name}</h3>
                 <p className="mt-2 text-base font-medium text-secondary">{activeStudent.subject || '—'}</p>

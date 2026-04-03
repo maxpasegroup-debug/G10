@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useId, useState, type FormEvent } from 'react'
+import toast from 'react-hot-toast'
+import { EmptyState, EmptyStateIconClasses } from '../../components/EmptyState'
 import { authHeaders } from '../../auth/authService'
-import { API_URL, apiUrl } from '../../lib/api'
+import { API_URL } from '../../lib/api'
+import { apiFetchData } from '../../lib/apiClient'
 
 type ClassRow = {
   id: number
@@ -11,12 +14,6 @@ type ClassRow = {
 }
 
 const subjectOptions = ['Piano', 'Guitar', 'Vocal', 'Drums'] as const
-
-async function readJson<T>(res: Response): Promise<T> {
-  const body = (await res.json()) as { success?: boolean; data?: T; error?: string }
-  if (!res.ok) throw new Error(body.error || res.statusText || 'Request failed')
-  return body.data as T
-}
 
 export function AdminClassesPage() {
   const formId = useId()
@@ -39,8 +36,7 @@ export function AdminClassesPage() {
       return
     }
     setListError(null)
-    const res = await fetch(apiUrl('/api/classes'), { headers: authHeaders() })
-    const data = await readJson<ClassRow[]>(res)
+    const data = await apiFetchData<ClassRow[]>('/api/classes', { headers: authHeaders() })
     setClasses(data)
   }, [])
 
@@ -88,7 +84,7 @@ export function AdminClassesPage() {
     setFormError(null)
     setSubmitting(true)
     try {
-      const res = await fetch(apiUrl('/api/classes'), {
+      await apiFetchData<ClassRow>('/api/classes', {
         method: 'POST',
         headers: authHeaders(true),
         body: JSON.stringify({
@@ -98,13 +94,15 @@ export function AdminClassesPage() {
           isLive,
         }),
       })
-      await readJson<ClassRow>(res)
       setFormOpen(false)
       setFormError(null)
       resetForm()
       await load()
+      toast.success('Class created successfully')
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Could not create class')
+      const msg = err instanceof Error ? err.message : 'Error saving data'
+      setFormError(msg)
+      toast.error(msg)
     } finally {
       setSubmitting(false)
     }
@@ -131,31 +129,44 @@ export function AdminClassesPage() {
         </button>
       </div>
 
-      <ul className="space-y-4">
-        {classes.map((item) => (
-          <li
-            key={item.id}
-            className="rounded-2xl border border-primary/[0.08] bg-white p-5 shadow-[var(--shadow-card)] sm:p-6"
-          >
-            <p className="text-xl font-bold text-primary">{item.name}</p>
-            <p className="mt-2 text-base text-primary/75">
-              <span className="font-semibold text-primary/85">Subject: </span>
-              {item.subject || '—'}
-            </p>
-            {item.studio ? (
-              <p className="mt-1 text-base text-primary/75">
-                <span className="font-semibold text-primary/85">Studio / schedule: </span>
-                {item.studio}
+      {!listError && classes.length === 0 ? (
+        <EmptyState
+          icon={<EmptyStateIconClasses />}
+          title="No classes created"
+          description="Create a class to organize students, schedules, and live sessions."
+          action={{
+            label: 'Add class',
+            onClick: openForm,
+            disabled: submitting,
+          }}
+        />
+      ) : classes.length > 0 ? (
+        <ul className="space-y-4">
+          {classes.map((item) => (
+            <li
+              key={item.id}
+              className="rounded-2xl border border-primary/[0.08] bg-white p-5 shadow-[var(--shadow-card)] sm:p-6"
+            >
+              <p className="text-xl font-bold text-primary">{item.name}</p>
+              <p className="mt-2 text-base text-primary/75">
+                <span className="font-semibold text-primary/85">Subject: </span>
+                {item.subject || '—'}
               </p>
-            ) : null}
-            {item.is_live ? (
-              <span className="mt-3 inline-block rounded-lg bg-red-100 px-2 py-1 text-xs font-bold text-red-800">
-                Live
-              </span>
-            ) : null}
-          </li>
-        ))}
-      </ul>
+              {item.studio ? (
+                <p className="mt-1 text-base text-primary/75">
+                  <span className="font-semibold text-primary/85">Studio / schedule: </span>
+                  {item.studio}
+                </p>
+              ) : null}
+              {item.is_live ? (
+                <span className="mt-3 inline-block rounded-lg bg-red-100 px-2 py-1 text-xs font-bold text-red-800">
+                  Live
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : null}
 
       {formOpen ? (
         <div

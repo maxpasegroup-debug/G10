@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import toast from 'react-hot-toast'
 import { authHeaders } from '../../auth/authService'
-import { API_URL, apiUrl } from '../../lib/api'
+import { API_URL, resolveMediaUrl } from '../../lib/api'
+import { apiFetch, apiFetchData } from '../../lib/apiClient'
 
 type AttendanceStatus = 'Present' | 'Absent' | 'Late'
 type PerformanceColor = 'Red' | 'Blue' | 'Green' | 'Yellow' | 'Orange'
@@ -8,7 +10,7 @@ type PerformanceColor = 'Red' | 'Blue' | 'Green' | 'Yellow' | 'Orange'
 type StudentRow = {
   id: string
   name: string
-  photo: string
+  photoUrl: string | null
   attendance: AttendanceStatus
   performance: PerformanceColor
   remark: string
@@ -45,9 +47,6 @@ const performanceColorMap: Record<PerformanceColor, string> = {
   Yellow: '#D4AF37',
   Orange: '#f97316',
 }
-
-const PLACEHOLDER =
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&q=80&auto=format&fit=crop'
 
 function todayIsoDate(): string {
   const d = new Date()
@@ -95,12 +94,6 @@ function latestPerformanceForStudent(rows: PerformanceApi[], studentId: number):
   return [...mine].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
 }
 
-async function readList<T>(res: Response): Promise<T> {
-  const body = (await res.json()) as { success?: boolean; data?: T; error?: string }
-  if (!res.ok) throw new Error(body.error || res.statusText || 'Request failed')
-  return body.data as T
-}
-
 export function TeacherAttendanceDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -115,15 +108,11 @@ export function TeacherAttendanceDashboard() {
   const loadRoster = useCallback(async (classId: number) => {
     if (!API_URL) throw new Error('VITE_API_URL is not set')
 
-    const [stRes, attRes, perfRes] = await Promise.all([
-      fetch(apiUrl(`/api/students?class_id=${classId}`), { headers: authHeaders() }),
-      fetch(apiUrl(`/api/attendance?class_id=${classId}`), { headers: authHeaders() }),
-      fetch(apiUrl(`/api/performance?class_id=${classId}`), { headers: authHeaders() }),
+    const [list, att, perf] = await Promise.all([
+      apiFetchData<StudentApi[]>(`/api/students?class_id=${classId}`, { headers: authHeaders() }),
+      apiFetchData<AttendanceApi[]>(`/api/attendance?class_id=${classId}`, { headers: authHeaders() }),
+      apiFetchData<PerformanceApi[]>(`/api/performance?class_id=${classId}`, { headers: authHeaders() }),
     ])
-
-    const list = await readList<StudentApi[]>(stRes)
-    const att = await readList<AttendanceApi[]>(attRes)
-    const perf = await readList<PerformanceApi[]>(perfRes)
 
     const rows: StudentRow[] = list.map((s) => {
       const attStatus = latestAttendanceForStudent(att, s.id, selectedDate)
@@ -131,7 +120,7 @@ export function TeacherAttendanceDashboard() {
       return {
         id: String(s.id),
         name: s.name || `Student #${s.id}`,
-        photo: s.photo || PLACEHOLDER,
+        photoUrl: s.photo ? resolveMediaUrl(s.photo) : null,
         attendance: normalizeAttendanceStatus(attStatus),
         performance: p ? scoreToPerformanceColor(p.score) : 'Green',
         remark: p?.remarks || '',
@@ -152,8 +141,7 @@ export function TeacherAttendanceDashboard() {
       setLoading(true)
       setError(null)
       try {
-        const res = await fetch(apiUrl('/api/classes'), { headers: authHeaders() })
-        const data = await readList<ClassRow[]>(res)
+        const data = await apiFetchData<ClassRow[]>('/api/classes', { headers: authHeaders() })
         if (cancelled) return
         setClasses(data)
         if (data.length) {
@@ -218,7 +206,7 @@ export function TeacherAttendanceDashboard() {
     setSaveError(null)
     try {
       for (const s of students) {
-        const attRes = await fetch(apiUrl('/api/attendance'), {
+        await apiFetch('/api/attendance', {
           method: 'POST',
           headers: authHeaders(true),
           body: JSON.stringify({
@@ -227,11 +215,7 @@ export function TeacherAttendanceDashboard() {
             status: s.attendance,
           }),
         })
-        if (!attRes.ok) {
-          const body = (await attRes.json()) as { error?: string }
-          throw new Error(body.error || 'Attendance save failed')
-        }
-        const perfRes = await fetch(apiUrl('/api/performance'), {
+        await apiFetch('/api/performance', {
           method: 'POST',
           headers: authHeaders(true),
           body: JSON.stringify({
@@ -240,17 +224,16 @@ export function TeacherAttendanceDashboard() {
             remarks: s.remark.trim() ? s.remark.trim() : null,
           }),
         })
-        if (!perfRes.ok) {
-          const body = (await perfRes.json()) as { error?: string }
-          throw new Error(body.error || 'Performance save failed')
-        }
       }
       setSavedAt(new Date().toLocaleTimeString())
       setSaveState('idle')
       await loadRoster(Number(selectedClassId))
+      toast.success('Attendance and performance saved')
     } catch (e) {
       setSaveState('error')
-      setSaveError(e instanceof Error ? e.message : 'Save failed')
+      const msg = e instanceof Error ? e.message : 'Error saving data'
+      setSaveError(msg)
+      toast.error(msg)
     }
   }
 
@@ -349,11 +332,20 @@ export function TeacherAttendanceDashboard() {
                   <tr key={student.id} className="align-top">
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-3">
-                        <img
-                          src={student.photo}
-                          alt={student.name}
-                          className="h-10 w-10 rounded-full object-cover ring-2 ring-primary/10"
-                        />
+                        {student.photoUrl ? (
+                          <img
+                            src={student.photoUrl}
+                            alt=""
+                            className="h-10 w-10 rounded-full object-cover ring-2 ring-primary/10"
+                          />
+                        ) : (
+                          <div
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary/45 ring-2 ring-primary/10"
+                            aria-hidden
+                          >
+                            {(student.name || '?').charAt(0).toUpperCase()}
+                          </div>
+                        )}
                         <p className="text-sm font-semibold text-primary">{student.name}</p>
                       </div>
                     </td>

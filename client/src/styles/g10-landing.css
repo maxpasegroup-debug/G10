@@ -200,12 +200,14 @@
 }
 
 .g10-hero__bg {
-  background:
-    linear-gradient(rgba(11, 42, 74, 0.85), rgba(11, 42, 74, 0.85)),
-    url('/images/music-class.jpg');
+  background: linear-gradient(
+    135deg,
+    rgba(11, 42, 74, 0.97) 0%,
+    rgba(28, 78, 115, 0.92) 50%,
+    rgba(11, 42, 74, 0.95) 100%
+  );
   background-size: cover;
   background-position: center;
-  background-repeat: no-repeat;
 }
 
 .g10-hero__text-block {

@@ -1,5 +1,4 @@
-import { useNavigate } from 'react-router-dom'
-import { clearStoredToken } from '../../auth/authService'
+import { logout } from '../../auth/authService'
 
 type AdminHeaderProps = {
   title: string
@@ -8,11 +7,8 @@ type AdminHeaderProps = {
 }
 
 export function AdminHeader({ title, adminName = 'Studio Admin', onMenuClick }: AdminHeaderProps) {
-  const navigate = useNavigate()
-
   function handleLogout() {
-    clearStoredToken()
-    navigate('/login', { replace: true })
+    logout()
   }
 
   return (

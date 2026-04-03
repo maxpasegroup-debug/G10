@@ -1,33 +1,24 @@
 import { Link } from 'react-router-dom'
 
-const classDetails = [
-  'Junior Melodies',
-  'Intermediate Rhythms',
-  'Advanced Harmonies',
-] as const
+export type GalleryTeaser = { src: string; caption: string }
 
-const featuredPrograms = ['Piano', 'Guitar', 'Violin', 'Vocal Training'] as const
+type MusicLandingSectionsProps = {
+  /** Class names from DB (e.g. public /classes) */
+  classDetailTitles: string[]
+  /** Distinct subjects from DB */
+  programSubjects: string[]
+  /** Recent gallery items for spotlight */
+  galleryTeasers: GalleryTeaser[]
+}
 
-const testimonials = [
-  {
-    quote:
-      'The home studio feels calm and focused. My daughter went from shy to performing at the recital in six months.',
-    name: 'Ananya K.',
-    role: 'Parent, Junior Melodies',
-  },
-  {
-    quote:
-      'Patient teachers and clear structure. I finally understood rhythm — drums are now my favorite hour of the week.',
-    name: 'Rahul M.',
-    role: 'Student, Intermediate Rhythms',
-  },
-] as const
-
-export function MusicLandingSections() {
+export function MusicLandingSections({
+  classDetailTitles,
+  programSubjects,
+  galleryTeasers,
+}: MusicLandingSectionsProps) {
   return (
     <main className="min-w-0 flex-1 pb-12">
       <div className="grid gap-6 lg:grid-cols-3 lg:gap-8 lg:items-start">
-        {/* A. Class Details */}
         <section
           id="classes"
           className="scroll-mt-[88px] rounded-[12px] border border-primary/[0.06] bg-white p-6 shadow-[var(--shadow-card)] sm:p-7"
@@ -39,24 +30,29 @@ export function MusicLandingSections() {
           >
             Class Details
           </h2>
-          <ul className="mt-5 space-y-0 divide-y divide-primary/[0.06]">
-            {classDetails.map((title) => (
-              <li key={title} className="flex items-center gap-3 py-3.5 first:pt-0">
-                <span
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-primary/[0.06] text-secondary"
-                  aria-hidden
-                >
-                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
-                  </svg>
-                </span>
-                <span className="text-[15px] font-medium leading-snug text-primary">{title}</span>
-              </li>
-            ))}
-          </ul>
+          {classDetailTitles.length === 0 ? (
+            <p className="mt-5 text-sm leading-relaxed text-primary/65">
+              Offerings will appear here when classes are published in the admin.
+            </p>
+          ) : (
+            <ul className="mt-5 space-y-0 divide-y divide-primary/[0.06]">
+              {classDetailTitles.map((title) => (
+                <li key={title} className="flex items-center gap-3 py-3.5 first:pt-0">
+                  <span
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-primary/[0.06] text-secondary"
+                    aria-hidden
+                  >
+                    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                    </svg>
+                  </span>
+                  <span className="text-[15px] font-medium leading-snug text-primary">{title}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
-        {/* B. Featured Programs */}
         <section
           id="faculty"
           className="scroll-mt-[88px] rounded-[12px] border border-primary/[0.06] bg-white p-6 shadow-[var(--shadow-card)] sm:p-7"
@@ -66,23 +62,31 @@ export function MusicLandingSections() {
             id="featured-programs-heading"
             className="border-b border-primary/[0.08] pb-3 text-base font-semibold uppercase tracking-wide text-primary"
           >
-            Featured Programs
+            Programs
           </h2>
-          <ul className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
-            {featuredPrograms.map((program) => (
-              <li key={program}>
-                <span className="flex items-center justify-between gap-3 rounded-[12px] border border-primary/[0.07] bg-surface/80 px-4 py-3.5 text-sm font-medium text-primary shadow-[0_1px_0_rgba(11,42,74,0.06)]">
-                  {program}
-                  <span className="text-secondary" aria-hidden>
-                    →
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
+          {programSubjects.length === 0 ? (
+            <p className="mt-5 text-sm leading-relaxed text-primary/65">
+              Subjects will list here from your active class catalog.
+            </p>
+          ) : (
+            <ul className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
+              {programSubjects.map((program) => (
+                <li key={program}>
+                  <Link
+                    to={`/classes`}
+                    className="flex items-center justify-between gap-3 rounded-[12px] border border-primary/[0.07] bg-surface/80 px-4 py-3.5 text-sm font-medium text-primary shadow-[0_1px_0_rgba(11,42,74,0.06)] transition hover:border-secondary/40"
+                  >
+                    {program}
+                    <span className="text-secondary" aria-hidden>
+                      →
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
-        {/* C. Student Spotlight */}
         <section
           id="gallery"
           className="scroll-mt-[88px] rounded-[12px] border border-primary/[0.06] bg-white p-6 shadow-[var(--shadow-card)] sm:p-7"
@@ -92,24 +96,34 @@ export function MusicLandingSections() {
             id="student-spotlight-heading"
             className="border-b border-primary/[0.08] pb-3 text-base font-semibold uppercase tracking-wide text-primary"
           >
-            Student Spotlight
+            From the gallery
           </h2>
-          <div className="mt-5 space-y-4">
-            {testimonials.map((t) => (
-              <blockquote
-                key={t.name}
-                className="rounded-[12px] border border-secondary/35 bg-secondary/90 p-4 shadow-[0_4px_16px_-6px_rgba(212,175,55,0.35)] sm:p-5"
-              >
-                <p className="text-sm leading-relaxed text-primary/90">&ldquo;{t.quote}&rdquo;</p>
-                <footer className="mt-3 border-t border-primary/10 pt-3">
-                  <cite className="not-italic">
-                    <span className="block text-sm font-semibold text-primary">{t.name}</span>
-                    <span className="mt-0.5 block text-xs text-primary/65">{t.role}</span>
-                  </cite>
-                </footer>
-              </blockquote>
-            ))}
-          </div>
+          {galleryTeasers.length === 0 ? (
+            <p className="mt-5 text-sm leading-relaxed text-primary/65">
+              Photos from classes and performances appear here once added in admin.
+            </p>
+          ) : (
+            <div className="mt-5 space-y-4">
+              {galleryTeasers.map((t) => (
+                <Link
+                  key={t.src}
+                  to="/gallery"
+                  className="group block overflow-hidden rounded-[12px] border border-primary/[0.08] no-underline shadow-[0_2px_12px_-4px_rgba(11,42,74,0.15)] transition hover:border-secondary/40"
+                >
+                  <span className="relative block aspect-[16/10] bg-primary/10">
+                    <img
+                      src={t.src}
+                      alt=""
+                      className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </span>
+                  <p className="px-3 py-2.5 text-sm font-medium text-primary">{t.caption}</p>
+                </Link>
+              ))}
+            </div>
+          )}
         </section>
       </div>
 

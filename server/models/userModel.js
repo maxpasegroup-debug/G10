@@ -30,9 +30,20 @@ async function listUsers() {
   return rows
 }
 
+/** Public faculty list: teachers only, no secrets. Columns exist after migration 009. */
+async function listPublicTeachers() {
+  const { rows } = await pool.query(
+    `SELECT id, name, title, bio, photo_url
+     FROM users
+     WHERE role = 'teacher' AND name IS NOT NULL AND trim(name) <> ''
+     ORDER BY id ASC`,
+  )
+  return rows
+}
+
 async function deleteUser(id) {
   const { rowCount } = await pool.query('DELETE FROM users WHERE id = $1', [id])
   return rowCount > 0
 }
 
-module.exports = { findByEmail, createUser, findById, listUsers, deleteUser }
+module.exports = { findByEmail, createUser, findById, listUsers, deleteUser, listPublicTeachers }

@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import toast from 'react-hot-toast'
 import type { UserRole } from '../../auth/types'
 import {
   loginWithOtp,
@@ -42,10 +43,13 @@ export function LoginForm({ role, onChangeRole, onLoginSuccess }: LoginFormProps
         password,
       })
       if (result.success) {
+        toast.success('Signed in successfully')
         onLoginSuccess(result.role ?? role)
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sign-in failed')
+      const msg = err instanceof Error ? err.message : 'Sign-in failed'
+      setError(msg)
+      toast.error(msg)
     } finally {
       setLoading(false)
     }
@@ -62,10 +66,13 @@ export function LoginForm({ role, onChangeRole, onLoginSuccess }: LoginFormProps
         otp: otp.trim(),
       })
       if (result.success) {
+        toast.success('Signed in successfully')
         onLoginSuccess(result.role ?? role)
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'OTP sign-in failed')
+      const msg = err instanceof Error ? err.message : 'OTP sign-in failed'
+      setError(msg)
+      toast.error(msg)
     } finally {
       setLoading(false)
     }
@@ -74,7 +81,9 @@ export function LoginForm({ role, onChangeRole, onLoginSuccess }: LoginFormProps
   async function handleForgotPassword() {
     const id = emailOrMobile.trim()
     if (!id) {
-      setError('Enter your email or mobile first.')
+      const msg = 'Enter your email or mobile first.'
+      setError(msg)
+      toast.error(msg)
       return
     }
     setError(null)
@@ -82,8 +91,11 @@ export function LoginForm({ role, onChangeRole, onLoginSuccess }: LoginFormProps
     try {
       await requestPasswordReset(id, role)
       setOtpHint(null)
+      toast.success('If an account exists, check your email for reset instructions.')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Request failed')
+      const msg = err instanceof Error ? err.message : 'Request failed'
+      setError(msg)
+      toast.error(msg)
     } finally {
       setLoading(false)
     }
@@ -92,7 +104,9 @@ export function LoginForm({ role, onChangeRole, onLoginSuccess }: LoginFormProps
   async function handleSendOtp() {
     const id = emailOrMobile.trim()
     if (!id) {
-      setError('Enter your email or mobile first.')
+      const msg = 'Enter your email or mobile first.'
+      setError(msg)
+      toast.error(msg)
       return
     }
     setError(null)
@@ -100,8 +114,11 @@ export function LoginForm({ role, onChangeRole, onLoginSuccess }: LoginFormProps
     try {
       await sendOtp(id, role)
       setOtpHint('If this account exists, a code was sent.')
+      toast.success('Code sent if this account exists.')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not send code')
+      const msg = err instanceof Error ? err.message : 'Could not send code'
+      setError(msg)
+      toast.error(msg)
     } finally {
       setLoading(false)
     }

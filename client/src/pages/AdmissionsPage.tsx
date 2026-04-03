@@ -1,37 +1,52 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import { Navbar } from '../components/Navbar'
 import { PageHero } from '../components/PageHero'
 import { PublicFooter } from '../components/PublicFooter'
 import { useSiteSettings } from '../context/SettingsContext'
-import { API_URL, apiUrl } from '../lib/api'
-
-const courses = [
-  { id: 'piano', title: 'Piano', image: '/images/hero-keyboard.jpg' },
-  { id: 'guitar', title: 'Guitar', image: '/images/music-class.jpg' },
-  { id: 'vocal', title: 'Vocal', image: '/images/hero-singing.jpg' },
-  { id: 'drums', title: 'Drums', image: '/images/hero-drums.jpg' },
-] as const
-
-const courseOptions = ['Piano', 'Guitar', 'Vocal', 'Drums'] as const
-
-const trustLines = [
-  'Limited seats per batch',
-  'Personal attention guaranteed',
-  'Flexible timings available',
-] as const
+import { API_URL } from '../lib/api'
+import { apiFetch } from '../lib/apiClient'
+import { fetchPublicClasses } from '../lib/publicContent'
 
 export function AdmissionsPage() {
   const { settings, loading } = useSiteSettings()
   const academy = settings?.academy_name?.trim() || ''
+  const admissionsMsg = (settings?.admissions_message ?? '').trim()
   const location = useLocation()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
-  const [course, setCourse] = useState<string>('Piano')
+  const [course, setCourse] = useState<string>('')
   const [age, setAge] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [subjects, setSubjects] = useState<string[]>([])
+
+  useEffect(() => {
+    if (!API_URL) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const classes = await fetchPublicClasses()
+        if (cancelled) return
+        const subs = [...new Set(classes.map((c) => (c.subject || '').trim()).filter(Boolean))].sort()
+        setSubjects(subs)
+        setCourse((prev) => {
+          if (prev && subs.includes(prev)) return prev
+          return subs[0] ?? 'General enquiry'
+        })
+      } catch {
+        if (!cancelled) {
+          setSubjects([])
+          setCourse('General enquiry')
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     if (location.hash !== '#admission-form') return
@@ -50,12 +65,14 @@ export function AdmissionsPage() {
     e.preventDefault()
     setSubmitError(null)
     if (!API_URL) {
-      setSubmitError('This form requires the API (set VITE_API_URL).')
+      const msg = 'This form requires the API (set VITE_API_URL).'
+      setSubmitError(msg)
+      toast.error(msg)
       return
     }
     setSubmitting(true)
     try {
-      const res = await fetch(apiUrl('/api/enquiries'), {
+      await apiFetch('/api/enquiries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -65,11 +82,12 @@ export function AdmissionsPage() {
           age: age.trim() || null,
         }),
       })
-      const body = (await res.json()) as { success?: boolean; error?: string }
-      if (!res.ok) throw new Error(body.error || 'Could not submit enquiry')
       setSubmitted(true)
+      toast.success('Enquiry submitted successfully')
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Could not submit enquiry')
+      const msg = err instanceof Error ? err.message : 'Error saving data'
+      setSubmitError(msg)
+      toast.error(msg)
     } finally {
       setSubmitting(false)
     }
@@ -82,9 +100,9 @@ export function AdmissionsPage() {
         <PageHero
           title="Admissions Open"
           subtitle={
-            loading && !academy
+            loading && !academy && !admissionsMsg
               ? 'Loading…'
-              : `Start your musical journey with ${academy || 'us'} today`
+              : admissionsMsg || `Start your musical journey with ${academy || 'us'} today`
           }
         />
 
@@ -143,33 +161,37 @@ export function AdmissionsPage() {
 
         <section className="px-4 pb-10 sm:px-6 md:px-[60px] md:pb-14">
           <div className="mx-auto max-w-[1000px]">
-            <h2 className="mb-8 text-center text-xl font-bold text-primary md:text-2xl">Pick a course</h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {courses.map((c) => (
-                <article
-                  key={c.id}
-                  className="overflow-hidden rounded-2xl border border-primary/[0.08] bg-white shadow-[var(--shadow-card)]"
-                >
-                  <img
-                    src={c.image}
-                    alt=""
-                    className="h-40 w-full object-cover"
-                    width={320}
-                    height={160}
-                  />
-                  <div className="p-4 text-center">
-                    <h3 className="text-lg font-bold text-primary">{c.title}</h3>
-                    <button
-                      type="button"
-                      className="mt-4 w-full rounded-lg bg-primary py-3 text-sm font-semibold text-white transition hover:bg-primary-light"
-                      onClick={() => selectCourse(c.title)}
-                    >
-                      Select
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
+            <h2 className="mb-8 text-center text-xl font-bold text-primary md:text-2xl">Pick a program</h2>
+            {subjects.length === 0 ? (
+              <p className="mb-6 text-center text-sm text-primary/65">
+                Subjects from your live class catalog will appear here. You can still enquire below.
+              </p>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {subjects.map((s) => (
+                  <article
+                    key={s}
+                    className="overflow-hidden rounded-2xl border border-primary/[0.08] bg-white shadow-[var(--shadow-card)]"
+                  >
+                    <div className="flex h-40 items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
+                      <span className="font-[family-name:var(--font-brand)] text-4xl font-bold text-primary/25">
+                        {s.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="p-4 text-center">
+                      <h3 className="text-lg font-bold text-primary">{s}</h3>
+                      <button
+                        type="button"
+                        className="mt-4 w-full rounded-lg bg-primary py-3 text-sm font-semibold text-white transition hover:bg-primary-light"
+                        onClick={() => selectCourse(s)}
+                      >
+                        Select
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -237,7 +259,7 @@ export function AdmissionsPage() {
                       disabled={submitting}
                       className="w-full rounded-xl border border-primary/[0.12] bg-white px-4 py-3.5 text-base text-primary outline-none ring-secondary/30 transition focus:ring-2 disabled:opacity-60"
                     >
-                      {courseOptions.map((opt) => (
+                      {(subjects.length ? subjects : ['General enquiry']).map((opt) => (
                         <option key={opt} value={opt}>
                           {opt}
                         </option>
@@ -272,16 +294,22 @@ export function AdmissionsPage() {
               )}
 
               <ul className="mt-8 space-y-3 border-t border-primary/[0.08] pt-6">
-                {trustLines.map((line) => (
-                  <li key={line} className="flex items-center gap-3 text-sm font-medium text-primary/75">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary/20 text-secondary">
-                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </span>
-                    {line}
-                  </li>
-                ))}
+                {[
+                  academy ? `Enrolment team at ${academy}` : 'We respond to every enquiry',
+                  settings?.phone ? `Call ${settings.phone}` : null,
+                  settings?.email ? `Email ${settings.email}` : null,
+                ]
+                  .filter(Boolean)
+                  .map((line) => (
+                    <li key={line as string} className="flex items-center gap-3 text-sm font-medium text-primary/75">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary/20 text-secondary">
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </span>
+                      {line}
+                    </li>
+                  ))}
               </ul>
             </div>
           </div>

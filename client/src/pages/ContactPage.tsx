@@ -17,6 +17,7 @@ export function ContactPage() {
   const address = settings?.address ?? ''
   const mapEmbed = settings?.map_embed_url ?? ''
   const academyName = settings?.academy_name ?? ''
+  const contactIntro = (settings?.contact_intro ?? '').trim()
 
   const phoneTel = useMemo(() => telHref(displayPhone), [displayPhone])
   const whatsappHrefFull = useMemo(
@@ -39,7 +40,13 @@ export function ContactPage() {
     <div className="min-h-dvh bg-surface font-sans text-primary">
       <Navbar />
       <main>
-        <PageHero title="Contact Us" subtitle="We're here to help you get started" />
+        <PageHero
+          title="Contact Us"
+          subtitle={
+            contactIntro ||
+            (loading && !settings ? '…' : "We're here to help you get started")
+          }
+        />
 
         <section className="px-4 py-10 sm:px-6 md:px-[60px] md:py-14">
           <div className="mx-auto grid max-w-[1000px] gap-6 md:grid-cols-3">

@@ -18,7 +18,6 @@ export function AuthLayout({ children }: AuthLayoutProps) {
           className="relative hidden overflow-hidden bg-primary lg:flex lg:flex-col lg:justify-between"
           aria-hidden
         >
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=1200&q=80&auto=format&fit=crop')] bg-cover bg-center opacity-30" />
           <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/95 to-primary-light/90" />
           <div className="relative z-10 flex flex-1 flex-col justify-center px-10 py-12 xl:px-14">
             <Link

@@ -38,6 +38,15 @@ export function isJwtExpired(payload: AppJwtPayload | null): boolean {
   return payload.exp * 1000 <= Date.now()
 }
 
+/**
+ * Strict check for route guards: payload must carry a numeric `exp` in the future.
+ * Tokens without `exp` are treated as invalid for protected routes.
+ */
+export function isJwtSessionValid(payload: AppJwtPayload | null): boolean {
+  if (!payload?.exp || typeof payload.exp !== 'number') return false
+  return payload.exp * 1000 > Date.now()
+}
+
 /** Path for the role-specific dashboard shell (or admin app). */
 export function getDashboardPathForRole(role: string | null | undefined): string | null {
   switch (role) {

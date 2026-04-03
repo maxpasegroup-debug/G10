@@ -1,0 +1,32 @@
+# Example GitHub Actions workflow — copy to .github/workflows/db-backup.yml
+# 1. Set repo secret DATABASE_URL (read-only DB user recommended).
+# 2. Uncomment schedule when ready.
+# 3. Add upload to S3/R2 for real off-site retention (artifacts expire).
+
+name: Database backup
+
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '0 3 * * *'   # 03:00 UTC daily
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: pg_dump
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          pg_dump "$DATABASE_URL" -Fc --no-owner --no-acl -f backup.dump
+
+      - name: Upload artifact (short retention)
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_id }}
+          path: backup.dump
+          retention-days: 7

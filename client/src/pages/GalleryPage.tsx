@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { EmptyState, EmptyStateIconPhotos } from '../components/EmptyState'
 import { Navbar } from '../components/Navbar'
 import { PageHero } from '../components/PageHero'
 import { PublicFooter } from '../components/PublicFooter'
-import { API_URL, apiUrl, resolveMediaUrl } from '../lib/api'
+import { API_URL, resolveMediaUrl } from '../lib/api'
+import { apiFetchData } from '../lib/apiClient'
 
 type GalleryCategory = 'classes' | 'performances' | 'studio'
 
@@ -21,136 +23,40 @@ const filterTabs = [
   { key: 'studio' as const, label: 'Studio' },
 ]
 
-const galleryItems: GalleryItem[] = [
-  {
-    id: '1',
-    src: '/images/hero-keyboard.jpg',
-    category: 'classes',
-    caption: 'Piano Session',
-  },
-  {
-    id: '2',
-    src: '/images/hero-drums.jpg',
-    category: 'classes',
-    caption: 'Drum Lesson',
-  },
-  {
-    id: '3',
-    src: '/images/hero-singing.jpg',
-    category: 'classes',
-    caption: 'Vocal Group',
-  },
-  {
-    id: '4',
-    src: '/images/hero-violin.jpg',
-    category: 'classes',
-    caption: 'Violin Class',
-  },
-  {
-    id: '5',
-    src: '/images/music-class.jpg',
-    category: 'studio',
-    caption: 'Studio Space',
-  },
-  {
-    id: '6',
-    src: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=900&q=80&auto=format&fit=crop',
-    category: 'studio',
-    caption: 'Instrument Wall',
-  },
-  {
-    id: '7',
-    src: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=900&q=80&auto=format&fit=crop',
-    category: 'performances',
-    caption: 'Live Performance',
-  },
-  {
-    id: '8',
-    src: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=900&q=80&auto=format&fit=crop',
-    category: 'performances',
-    caption: 'Stage Ensemble',
-  },
-  {
-    id: '9',
-    src: '/images/hero-keyboard.jpg',
-    category: 'studio',
-    caption: 'Keys Corner',
-  },
-  {
-    id: '10',
-    src: '/images/hero-singing.jpg',
-    category: 'performances',
-    caption: 'Recital Night',
-  },
-  {
-    id: '11',
-    src: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=900&q=80&auto=format&fit=crop',
-    category: 'classes',
-    caption: 'Keyboard Class',
-  },
-  {
-    id: '12',
-    src: '/images/music-class.jpg',
-    category: 'classes',
-    caption: 'Group Practice',
-  },
-  {
-    id: '13',
-    src: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=900&q=80&auto=format&fit=crop',
-    category: 'performances',
-    caption: 'Concert Lights',
-  },
-  {
-    id: '14',
-    src: '/images/hero-drums.jpg',
-    category: 'studio',
-    caption: 'Practice Room',
-  },
-  {
-    id: '15',
-    src: 'https://images.unsplash.com/photo-1519892300165-cb5582e4c7d2?w=900&q=80&auto=format&fit=crop',
-    category: 'classes',
-    caption: 'Rhythm Lab',
-  },
-  {
-    id: '16',
-    src: '/images/hero-violin.jpg',
-    category: 'performances',
-    caption: 'String Showcase',
-  },
-]
-
 const PAGE_SIZE = 8
 
 export function GalleryPage() {
+  const navigate = useNavigate()
   const [activeFilter, setActiveFilter] = useState<(typeof filterTabs)[number]['key']>('all')
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [lightboxId, setLightboxId] = useState<string | null>(null)
-  const [displayItems, setDisplayItems] = useState<GalleryItem[]>(galleryItems)
+  const [displayItems, setDisplayItems] = useState<GalleryItem[]>([])
   const [galleryNotice, setGalleryNotice] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!API_URL) return
     let cancelled = false
     ;(async () => {
+      if (!API_URL) {
+        setDisplayItems([])
+        setGalleryNotice('Set VITE_API_URL to load gallery photos from the server.')
+        return
+      }
       try {
-        const res = await fetch(apiUrl('/api/gallery'))
-        const body = (await res.json()) as {
-          success?: boolean
-          data?: { id: number; image_url: string; caption: string; category: string }[]
-        }
-        if (!res.ok || !body.success || !Array.isArray(body.data)) {
+        const rows = await apiFetchData<{ id: number; image_url: string; caption: string; category: string }[]>(
+          '/api/gallery',
+        )
+        if (!Array.isArray(rows)) {
           throw new Error('bad response')
         }
         if (cancelled) return
-        if (body.data.length === 0) {
+        if (rows.length === 0) {
           setDisplayItems([])
           setGalleryNotice(null)
           return
         }
         setGalleryNotice(null)
         setDisplayItems(
-          body.data.map((r) => ({
+          rows.map((r) => ({
             id: String(r.id),
             src: resolveMediaUrl(r.image_url),
             category: r.category as GalleryCategory,
@@ -159,8 +65,8 @@ export function GalleryPage() {
         )
       } catch {
         if (!cancelled) {
-          setDisplayItems(galleryItems)
-          setGalleryNotice('Showing sample photos (could not load live gallery).')
+          setDisplayItems([])
+          setGalleryNotice('Could not load gallery. Check your connection and try again.')
         }
       }
     })()
@@ -265,9 +171,32 @@ export function GalleryPage() {
             </div>
 
             {filtered.length === 0 ? (
-              <p className="mt-10 py-12 text-center text-sm text-primary/55">
-                {API_URL ? 'No photos here yet. Check back soon.' : 'No photos in this category.'}
-              </p>
+              <div className="mt-10">
+                {displayItems.length === 0 ? (
+                  <EmptyState
+                    icon={<EmptyStateIconPhotos />}
+                    title="No photos uploaded"
+                    description="We’re adding new moments from our classes and performances—check back soon."
+                    className="bg-white shadow-[var(--shadow-card)]"
+                    action={{
+                      label: 'Browse classes',
+                      onClick: () => navigate('/classes'),
+                    }}
+                  />
+                ) : (
+                  <EmptyState
+                    icon={<EmptyStateIconPhotos />}
+                    title="No photos in this category"
+                    description="Try another tab or view the full gallery."
+                    className="bg-white shadow-[var(--shadow-card)]"
+                    action={{
+                      label: 'View all',
+                      onClick: () => setActiveFilter('all'),
+                      variant: 'secondary',
+                    }}
+                  />
+                )}
+              </div>
             ) : (
               <div className="mt-10 columns-2 gap-4 sm:columns-3 xl:columns-4">
                 {visibleItems.map((item, idx) => (
@@ -285,6 +214,8 @@ export function GalleryPage() {
                           idx % 4 === 0 ? 'h-[260px] sm:h-[280px]' : 'h-[200px] sm:h-[220px]'
                         }`}
                         loading="lazy"
+                        decoding="async"
+                        fetchPriority={idx === 0 ? 'high' : 'low'}
                       />
                       <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-3 pb-2.5 pt-10">
                         <span className="text-sm font-medium text-white">{item.caption}</span>
@@ -382,6 +313,7 @@ export function GalleryPage() {
               src={currentLightboxItem.src}
               alt=""
               className="max-h-[85vh] w-auto max-w-full rounded-lg object-contain shadow-2xl"
+              decoding="async"
             />
             <p className="mt-3 text-center text-sm text-white/90">{currentLightboxItem.caption}</p>
           </div>

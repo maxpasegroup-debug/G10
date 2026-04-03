@@ -22,6 +22,7 @@ const userRoutes = require('./routes/userRoutes')
 const settingsRoutes = require('./routes/settingsRoutes')
 const galleryRoutes = require('./routes/galleryRoutes')
 const enquiryRoutes = require('./routes/enquiryRoutes')
+const publicRoutes = require('./routes/publicRoutes')
 const { syncTests } = require('./lib/syncTests')
 
 const app = express()
@@ -55,6 +56,7 @@ app.get('/api/health', (_req, res) => {
 // API routes
 app.use('/api/auth', authRoutes)
 app.use('/api/settings', settingsRoutes)
+app.use('/api/public', publicRoutes)
 app.use('/api/gallery', galleryRoutes)
 app.use('/api/enquiries', enquiryRoutes)
 app.use('/api/students', studentRoutes)
