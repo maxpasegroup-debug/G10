@@ -32,7 +32,12 @@ async function register(req, res) {
   })
 
   const token = jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
+    {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      student_id: user.student_id ?? null,
+    },
     process.env.JWT_SECRET,
     { expiresIn: '7d' },
   )
@@ -44,14 +49,17 @@ async function register(req, res) {
 }
 
 async function login(req, res) {
-  const { email, password } = req.body
-  if (!email || !password) {
-    const err = new Error('Email and password are required')
+  const identifier = String(
+    req.body.identifier ?? req.body.email ?? req.body.mobile ?? '',
+  ).trim()
+  const { password } = req.body
+  if (!identifier || !password) {
+    const err = new Error('Mobile or email and password are required')
     err.status = 400
     throw err
   }
 
-  const user = await userModel.findByEmail(email)
+  const user = await userModel.findByEmailOrMobile(identifier)
   if (!user) {
     const err = new Error('Invalid credentials')
     err.status = 401
@@ -66,7 +74,12 @@ async function login(req, res) {
   }
 
   const token = jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
+    {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      student_id: user.student_id ?? null,
+    },
     process.env.JWT_SECRET,
     { expiresIn: '7d' },
   )

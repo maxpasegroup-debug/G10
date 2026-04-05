@@ -10,8 +10,11 @@ type UserRow = {
   name: string | null
   email: string
   role: string
+  student_id: number | null
   created_at: string
 }
+
+type StudentOption = { id: number; name: string | null }
 
 const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
   { value: 'student', label: 'Student' },
@@ -32,6 +35,8 @@ export function AdminUsersPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState<UserRole>('student')
+  const [studentId, setStudentId] = useState('')
+  const [students, setStudents] = useState<StudentOption[]>([])
 
   const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null)
   const [deleteBusy, setDeleteBusy] = useState(false)
@@ -53,6 +58,16 @@ export function AdminUsersPage() {
       setLoading(true)
       try {
         await loadUsers()
+        if (API_URL && !cancelled) {
+          try {
+            const list = await apiFetchData<{ id: number; name: string | null }[]>('/api/students', {
+              headers: authHeaders(),
+            })
+            if (!cancelled) setStudents((list ?? []).map((s) => ({ id: s.id, name: s.name })))
+          } catch {
+            if (!cancelled) setStudents([])
+          }
+        }
       } catch (e) {
         if (!cancelled) setListError(e instanceof Error ? e.message : 'Could not load users')
       } finally {
@@ -74,20 +89,33 @@ export function AdminUsersPage() {
     }
     setSubmitting(true)
     try {
+      const body: {
+        name: string | null
+        email: string
+        password: string
+        role: UserRole
+        student_id?: number
+      } = {
+        name: name.trim() || null,
+        email: email.trim(),
+        password,
+        role,
+      }
+      if ((role === 'student' || role === 'parent') && studentId.trim()) {
+        const n = Number(studentId.trim())
+        if (Number.isFinite(n) && n > 0) body.student_id = Math.floor(n)
+      }
+
       await apiFetchData<{ user: UserRow }>('/api/users', {
         method: 'POST',
         headers: authHeaders(true),
-        body: JSON.stringify({
-          name: name.trim() || null,
-          email: email.trim(),
-          password,
-          role,
-        }),
+        body: JSON.stringify(body),
       })
       setName('')
       setEmail('')
       setPassword('')
       setRole('student')
+      setStudentId('')
       await loadUsers()
       toast.success('User created successfully')
     } catch (err) {
@@ -198,7 +226,10 @@ export function AdminUsersPage() {
             <select
               id={`${formId}-role`}
               value={role}
-              onChange={(e) => setRole(e.target.value as UserRole)}
+              onChange={(e) => {
+                setRole(e.target.value as UserRole)
+                if (e.target.value !== 'student' && e.target.value !== 'parent') setStudentId('')
+              }}
               disabled={submitting}
               className="w-full min-h-[48px] rounded-xl border border-primary/[0.12] bg-white px-4 text-sm text-primary outline-none ring-secondary/30 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
@@ -209,6 +240,31 @@ export function AdminUsersPage() {
               ))}
             </select>
           </div>
+
+          {(role === 'student' || role === 'parent') ? (
+            <div>
+              <label htmlFor={`${formId}-student`} className="mb-1.5 block text-sm font-semibold text-primary">
+                Linked student <span className="font-normal text-primary/50">(optional)</span>
+              </label>
+              <select
+                id={`${formId}-student`}
+                value={studentId}
+                onChange={(e) => setStudentId(e.target.value)}
+                disabled={submitting}
+                className="w-full min-h-[48px] rounded-xl border border-primary/[0.12] bg-white px-4 text-sm text-primary outline-none ring-secondary/30 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <option value="">— None —</option>
+                {students.map((s) => (
+                  <option key={s.id} value={String(s.id)}>
+                    {s.name?.trim() || `Student #${s.id}`}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1.5 text-xs text-primary/55">
+                Required for student/parent dashboards to load attendance and performance.
+              </p>
+            </div>
+          ) : null}
 
           <button
             type="submit"
@@ -235,13 +291,14 @@ export function AdminUsersPage() {
                     <th className="px-4 py-3">Name</th>
                     <th className="px-4 py-3">Email</th>
                     <th className="px-4 py-3">Role</th>
+                    <th className="px-4 py-3">Student</th>
                     <th className="px-4 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-primary/[0.07]">
                   {users.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-4 py-10 text-center text-primary/55">
+                      <td colSpan={5} className="px-4 py-10 text-center text-primary/55">
                         No users yet.
                       </td>
                     </tr>
@@ -251,6 +308,9 @@ export function AdminUsersPage() {
                         <td className="px-4 py-3 font-medium">{u.name || '—'}</td>
                         <td className="px-4 py-3 text-primary/80">{u.email}</td>
                         <td className="px-4 py-3 capitalize text-primary/80">{u.role}</td>
+                        <td className="px-4 py-3 tabular-nums text-primary/80">
+                          {u.student_id != null ? `#${u.student_id}` : '—'}
+                        </td>
                         <td className="px-4 py-3 text-right">
                           <button
                             type="button"

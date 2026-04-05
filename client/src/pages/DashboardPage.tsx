@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { getLinkedStudentIdFromToken } from '../auth/jwt'
 import type { UserRole } from '../auth/types'
 import { DashboardShell } from '../components/dashboard/DashboardShell'
 
@@ -18,10 +19,11 @@ function parsePositiveInt(raw: string | null): number | undefined {
 export function DashboardPage({ role }: DashboardPageProps) {
   const [searchParams] = useSearchParams()
 
-  const studentId = useMemo(
-    () => parsePositiveInt(searchParams.get('student_id')),
-    [searchParams],
-  )
+  const studentId = useMemo(() => {
+    if (role !== 'student' && role !== 'parent') return undefined
+    return getLinkedStudentIdFromToken()
+  }, [role])
+
   const classId = useMemo(
     () => parsePositiveInt(searchParams.get('class_id')),
     [searchParams],

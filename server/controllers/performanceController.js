@@ -1,11 +1,13 @@
 const performanceModel = require('../models/performanceModel')
 const activityLogModel = require('../models/activityLogModel')
+const { resolveListStudentScope } = require('../lib/studentAccessGuard')
 
 async function list(req, res) {
-  const studentId = req.query.student_id ?? req.query.studentId
+  const qSid = req.query.student_id ?? req.query.studentId
+  const studentId = resolveListStudentScope(req, qSid)
   const classId = req.query.class_id ?? req.query.classId
   const rows = await performanceModel.listPerformance({
-    studentId: studentId != null && studentId !== '' ? Number(studentId) : undefined,
+    studentId,
     classId: classId != null && classId !== '' ? Number(classId) : undefined,
   })
   res.json({ success: true, data: rows })

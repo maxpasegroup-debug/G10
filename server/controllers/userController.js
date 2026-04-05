@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt')
+const studentModel = require('../models/studentModel')
 const userModel = require('../models/userModel')
 
 const SALT_ROUNDS = 10
@@ -10,7 +11,7 @@ async function list(req, res) {
 }
 
 async function create(req, res) {
-  const { name, email, password, role } = req.body
+  const { name, email, password, role, student_id: studentIdRaw } = req.body
   if (!email || !password) {
     const err = new Error('Email and password are required')
     err.status = 400
@@ -30,12 +31,30 @@ async function create(req, res) {
     throw err
   }
 
+  let studentId = null
+  if (['student', 'parent'].includes(r) && studentIdRaw != null && studentIdRaw !== '') {
+    const sid = Number(studentIdRaw)
+    if (!Number.isFinite(sid) || sid <= 0) {
+      const err = new Error('student_id must be a positive integer')
+      err.status = 400
+      throw err
+    }
+    const student = await studentModel.getStudentById(sid)
+    if (!student) {
+      const err = new Error('Student not found for student_id')
+      err.status = 400
+      throw err
+    }
+    studentId = sid
+  }
+
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS)
   const user = await userModel.createUser({
     name: name?.trim() || null,
     email: email.trim(),
     passwordHash,
     role: r,
+    studentId,
   })
 
   res.status(201).json({ success: true, data: { user } })

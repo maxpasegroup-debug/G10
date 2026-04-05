@@ -9,6 +9,7 @@ export function DashboardLegacyRedirect() {
 
   const copy = new URLSearchParams(searchParams)
   copy.delete('role')
+  copy.delete('student_id')
   const qs = copy.toString()
   return <Navigate to={qs ? `${path}?${qs}` : path} replace />
 }

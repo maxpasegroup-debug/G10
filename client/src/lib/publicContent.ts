@@ -1,4 +1,4 @@
-import { API_URL, resolveMediaUrl } from './api'
+import { API_URL, galleryFileUrl } from './api'
 import { apiFetchData } from './apiClient'
 
 export type PublicClassRow = {
@@ -46,7 +46,7 @@ export function gallerySlideKey(id: number): string {
 export function mapGalleryToSlides(rows: GalleryApiRow[], limit = 4) {
   return rows.slice(0, limit).map((r) => ({
     key: gallerySlideKey(r.id),
-    src: resolveMediaUrl(r.image_url),
+    src: galleryFileUrl(r.id),
     caption: r.caption?.trim() || 'Photo',
   }))
 }

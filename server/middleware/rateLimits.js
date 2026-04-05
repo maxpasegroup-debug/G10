@@ -11,7 +11,7 @@ function apiLimiter() {
       req.path === '/' ||
       req.path === '/api/health' ||
       (typeof req.path === 'string' &&
-        (req.path.startsWith('/api/auth') || req.path.startsWith('/uploads/'))),
+        req.path.startsWith('/api/auth')),
     handler: (_req, res) => {
       res.status(429).json({ success: false, error: 'Too many requests, please try again later.' })
     },

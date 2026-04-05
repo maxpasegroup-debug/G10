@@ -6,11 +6,23 @@ export function apiUrl(path: string): string {
   return `${API_URL}${p}`
 }
 
-/** Absolute URL for gallery/uploads served from the API (paths like `/uploads/...`). */
+/** Public gallery binary (no JWT; row must exist in gallery_items). */
+export function galleryFileUrl(id: number): string {
+  if (!API_URL || !Number.isFinite(id) || id <= 0) return ''
+  return apiUrl(`/api/gallery/files/${id}`)
+}
+
+/**
+ * Absolute URL for API-hosted uploads. `/uploads/...` maps to authenticated `/api/uploads/...`.
+ * Use with `AuthedImage` or fetch + Bearer for anything under `/api/uploads/`.
+ */
 export function resolveMediaUrl(urlOrPath: string): string {
   if (!urlOrPath) return ''
   if (urlOrPath.startsWith('http://') || urlOrPath.startsWith('https://')) return urlOrPath
   if (!API_URL) return urlOrPath
-  if (urlOrPath.startsWith('/')) return `${API_URL}${urlOrPath}`
-  return urlOrPath
+  const p = urlOrPath.startsWith('/') ? urlOrPath : `/${urlOrPath}`
+  if (p.startsWith('/uploads/')) {
+    return `${API_URL}/api/uploads${p.slice('/uploads'.length)}`
+  }
+  return `${API_URL}${p}`
 }

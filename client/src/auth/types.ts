@@ -1,17 +1,10 @@
 export type UserRole = 'student' | 'parent' | 'teacher' | 'admin'
 
-export interface LoginCredentials {
+export interface PasswordLoginPayload {
   role: UserRole
-  /** Email address or mobile number (E.164 or local format). */
-  emailOrMobile: string
-}
-
-export interface PasswordLoginPayload extends LoginCredentials {
+  /** Mobile number (students/parents/teachers) or email (e.g. admin@g10amr.com). */
+  identifier: string
   password: string
-}
-
-export interface OtpLoginPayload extends LoginCredentials {
-  otp: string
 }
 
 export interface AuthResult {

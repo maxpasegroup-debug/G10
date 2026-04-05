@@ -1,4 +1,5 @@
 const fs = require('fs')
+const fsProm = require('fs/promises')
 const path = require('path')
 const galleryModel = require('../models/galleryModel')
 
@@ -17,6 +18,58 @@ function tryUnlinkUploadedFile(imageUrl) {
 async function listPublic(req, res) {
   const rows = await galleryModel.listGalleryPublic()
   res.json({ success: true, data: rows })
+}
+
+/** Public read for a published gallery row (no JWT; <img> friendly). */
+async function serveFileById(req, res) {
+  const id = Number(req.params.id)
+  if (!Number.isFinite(id) || id <= 0) {
+    const err = new Error('Invalid id')
+    err.status = 400
+    throw err
+  }
+  const row = await galleryModel.getGalleryItemById(id)
+  if (!row?.image_url) {
+    const err = new Error('Not found')
+    err.status = 404
+    throw err
+  }
+  const imageUrl = String(row.image_url).trim()
+  if (!imageUrl.startsWith(`${UPLOAD_PUBLIC_PREFIX}/`)) {
+    const err = new Error('Not found')
+    err.status = 404
+    throw err
+  }
+  const relative = imageUrl.replace(/^\//, '')
+  const abs = path.join(__dirname, '..', relative)
+  const uploadsRoot = path.resolve(path.join(__dirname, '..', 'uploads'))
+  const resolved = path.resolve(abs)
+  if (!resolved.startsWith(uploadsRoot + path.sep) && resolved !== uploadsRoot) {
+    return res.status(403).json({ success: false, error: 'Forbidden' })
+  }
+  let st
+  try {
+    st = await fsProm.stat(resolved)
+  } catch {
+    const err = new Error('Not found')
+    err.status = 404
+    throw err
+  }
+  if (!st.isFile()) {
+    const err = new Error('Not found')
+    err.status = 404
+    throw err
+  }
+  await new Promise((resolve, reject) => {
+    res.sendFile(resolved, (e) => {
+      if (e) {
+        if (!res.headersSent) res.status(500).json({ success: false, error: 'Could not send file' })
+        reject(e)
+        return
+      }
+      resolve()
+    })
+  })
 }
 
 async function createFromBody(req, res) {
@@ -70,4 +123,4 @@ async function remove(req, res) {
   res.json({ success: true, data: { id: deleted.id } })
 }
 
-module.exports = { listPublic, createFromBody, uploadFile, remove }
+module.exports = { listPublic, serveFileById, createFromBody, uploadFile, remove }

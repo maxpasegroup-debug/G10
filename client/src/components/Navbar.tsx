@@ -106,6 +106,7 @@ export function Navbar() {
           <Link
             key={item.to}
             to={item.to}
+            className={linkClassName(isItemActive(item))}
             onClick={() => setOpen(false)}
           >
             {item.label}

@@ -9,6 +9,7 @@ type ClassRow = {
   subject: string | null
   studio: string | null
   is_live: boolean | null
+  meeting_link: string | null
 }
 
 type StudioFilter = string
@@ -214,6 +215,16 @@ export function LiveClassroomDashboard() {
                   <p className="text-sm text-primary/65">{sub} session</p>
                   {c.name && c.studio && c.name !== c.studio ? (
                     <p className="text-xs text-primary/50">{c.name}</p>
+                  ) : null}
+                  {c.meeting_link?.trim() ? (
+                    <a
+                      href={c.meeting_link.trim()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-3 inline-flex min-h-[44px] w-full items-center justify-center rounded-[10px] bg-secondary px-4 text-sm font-bold text-primary shadow-[0_4px_12px_rgba(212,175,55,0.25)] transition hover:bg-secondary-hover"
+                    >
+                      Join Class
+                    </a>
                   ) : null}
                 </div>
               </article>

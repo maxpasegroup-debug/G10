@@ -1,7 +1,21 @@
 const studentModel = require('../models/studentModel')
 const activityLogModel = require('../models/activityLogModel')
+const { assertOwnStudentOrElevated, linkedStudentId } = require('../lib/studentAccessGuard')
 
 async function list(req, res) {
+  const role = String(req.user?.role || '').toLowerCase()
+  if (role === 'student' || role === 'parent') {
+    const mine = linkedStudentId(req.user)
+    if (mine == null) {
+      const e = new Error('Forbidden')
+      e.status = 403
+      throw e
+    }
+    const student = await studentModel.getStudentById(mine)
+    res.json({ success: true, data: student ? [student] : [] })
+    return
+  }
+
   const classId = req.query.class_id ?? req.query.classId
   const students = await studentModel.listStudents({
     classId: classId != null && classId !== '' ? Number(classId) : undefined,
@@ -10,7 +24,14 @@ async function list(req, res) {
 }
 
 async function getById(req, res) {
-  const student = await studentModel.getStudentById(Number(req.params.id))
+  const id = Number(req.params.id)
+  if (!Number.isFinite(id)) {
+    const err = new Error('Invalid student id')
+    err.status = 400
+    throw err
+  }
+  assertOwnStudentOrElevated(req, id)
+  const student = await studentModel.getStudentById(id)
   if (!student) {
     const err = new Error('Student not found')
     err.status = 404

@@ -25,6 +25,7 @@ npm run dev:server
 
 - **Client:** copy `client/.env.example` → `client/.env` and set `VITE_API_URL` to your deployed API base URL (no trailing slash).
 - **Server:** copy `server/.env.example` → `server/.env` and set `DATABASE_URL`, `JWT_SECRET`, `PORT`.
+- **Railway (production backend):** set `DATABASE_URL`, `JWT_SECRET`, `NODE_ENV=production`, CORS vars (`FRONTEND_URL` and/or `CORS_ORIGIN`), plus `SEED_ADMIN_EMAIL=admin@g10amr.com` and `SEED_ADMIN_PASSWORD` (strong secret). After first deploy, run **`npm run seed --prefix server`** once (e.g. Railway one-off command) to upsert the admin user. Students sign in with **mobile + password** (mobile stored in `users.email` or matching digits); admin signs in with **email + password** (e.g. `admin@g10amr.com`).
 
 ## Database
 

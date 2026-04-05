@@ -7,6 +7,7 @@ import {
   YAxis,
 } from 'recharts'
 import type { DotProps } from 'recharts'
+import { AuthedImage } from '../AuthedImage'
 import { authHeaders } from '../../auth/authService'
 import { API_URL, resolveMediaUrl } from '../../lib/api'
 import { apiFetchData } from '../../lib/apiClient'
@@ -118,7 +119,9 @@ export function PerformanceDashboard({ studentId, classId }: Props) {
     }
     if (!studentId) {
       setLoading(false)
-      setError('Add student_id to the dashboard URL (e.g. ?student_id=1&class_id=1).')
+      setError(
+        'Your login is not linked to a student record yet. Ask the studio to link your account to your student profile, then sign in again.',
+      )
       setStudent(null)
       setPerformance([])
       setAttendance([])
@@ -231,7 +234,7 @@ export function PerformanceDashboard({ studentId, classId }: Props) {
           <div className="flex flex-wrap items-center gap-6">
             <div className="flex items-center gap-3">
               {view.photoUrl ? (
-                <img
+                <AuthedImage
                   src={view.photoUrl}
                   alt={view.name}
                   className="h-12 w-12 rounded-full object-cover ring-2 ring-primary/10"

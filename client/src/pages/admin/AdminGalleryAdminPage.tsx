@@ -2,7 +2,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { EmptyState, EmptyStateIconPhotos } from '../../components/EmptyState'
 import { authHeaders } from '../../auth/authService'
-import { API_URL, resolveMediaUrl } from '../../lib/api'
+import { API_URL, galleryFileUrl } from '../../lib/api'
 import { apiFetchData } from '../../lib/apiClient'
 
 type GalleryRow = {
@@ -251,7 +251,7 @@ export function AdminGalleryAdminPage() {
             >
               <div className="relative aspect-square bg-primary/[0.06]">
                 <img
-                  src={resolveMediaUrl(img.image_url)}
+                  src={galleryFileUrl(img.id)}
                   alt=""
                   className="h-full w-full object-cover"
                   loading="lazy"

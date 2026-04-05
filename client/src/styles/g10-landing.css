@@ -1,7 +1,7 @@
 /* G10 AMR — navbar + hero (reference layout). Color values are fixed in :root / index.css */
 
 .g10-navbar {
-  position: fixed;
+  position: sticky;
   top: 0;
   left: 0;
   right: 0;
@@ -11,11 +11,9 @@
   display: flex;
   align-items: center;
   padding: 0 60px;
-  background: linear-gradient(
-    180deg,
-    #0B2A4A,
-    #102F55
-  );
+  background: rgba(11, 42, 74, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -96,7 +94,13 @@
 }
 
 .g10-navbar__link--active {
-  color: var(--gold);
+  color: #e6b325;
+  font-weight: 600;
+}
+
+.g10-navbar__mobile a.g10-navbar__link--active {
+  color: #e6b325;
+  font-weight: 600;
 }
 
 .g10-navbar__cta {
@@ -117,7 +121,7 @@
 }
 
 .student-login-btn {
-  background: #D4AF37;
+  background: #e6b325;
   color: #0B2A4A;
   font-weight: 600;
   border-radius: 8px;
@@ -174,11 +178,9 @@
   top: 72px;
   left: 0;
   right: 0;
-  background: linear-gradient(
-    180deg,
-    #0B2A4A,
-    #102F55
-  );
+  background: rgba(11, 42, 74, 0.97);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding: 16px 24px 24px;
   z-index: 49;
@@ -334,7 +336,7 @@
 .g10-page-hero__inner {
   box-sizing: border-box;
   min-height: 360px;
-  padding: calc(72px + 80px) 24px 60px;
+  padding: 80px 24px 60px;
   display: flex;
   flex-direction: column;
   align-items: center;

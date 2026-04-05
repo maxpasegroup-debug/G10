@@ -10,6 +10,7 @@ type EnquiryRow = {
   name: string
   phone: string
   course: string
+  message: string | null
   age: string | null
   created_at: string
 }
@@ -64,7 +65,9 @@ export function AdminEnquiriesPage() {
     <div className="max-w-3xl space-y-6">
       <div>
         <h2 className="text-lg font-bold text-primary sm:text-xl">Enquiries</h2>
-        <p className="mt-1 text-sm text-primary/65">Review and respond to admission enquiries.</p>
+        <p className="mt-1 text-sm text-primary/65">
+          Review and respond to admission and contact form submissions.
+        </p>
       </div>
 
       {error ? (
@@ -108,6 +111,11 @@ export function AdminEnquiriesPage() {
               <p className="mt-1 text-sm text-primary/80">
                 <span className="font-semibold">Course:</span> {r.course}
               </p>
+              {r.message ? (
+                <p className="mt-2 whitespace-pre-wrap text-sm text-primary/80">
+                  <span className="font-semibold">Message:</span> {r.message}
+                </p>
+              ) : null}
               {r.age ? (
                 <p className="mt-1 text-sm text-primary/80">
                   <span className="font-semibold">Age:</span> {r.age}

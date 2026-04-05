@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
+import { AuthedImage } from '../AuthedImage'
 import { authHeaders } from '../../auth/authService'
 import { API_URL, resolveMediaUrl } from '../../lib/api'
 import { apiFetch, apiFetchData } from '../../lib/apiClient'
@@ -333,7 +334,7 @@ export function TeacherAttendanceDashboard() {
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-3">
                         {student.photoUrl ? (
-                          <img
+                          <AuthedImage
                             src={student.photoUrl}
                             alt=""
                             className="h-10 w-10 rounded-full object-cover ring-2 ring-primary/10"

@@ -4,7 +4,7 @@ import { DashboardLegacyRedirect } from './components/auth/DashboardLegacyRedire
 import { RoleGuard } from './components/auth/RoleGuard'
 import { PageFallback } from './components/PageFallback'
 
-const LandingPage = lazy(() => import('./pages/LandingPage').then((m) => ({ default: m.LandingPage })))
+const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })))
 const AboutPage = lazy(() => import('./pages/AboutPage').then((m) => ({ default: m.AboutPage })))
 const AdmissionsPage = lazy(() => import('./pages/AdmissionsPage').then((m) => ({ default: m.AdmissionsPage })))
 const AuthPage = lazy(() => import('./pages/AuthPage').then((m) => ({ default: m.AuthPage })))
@@ -47,7 +47,7 @@ function App() {
   return (
     <Suspense fallback={<PageFallback />}>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<HomePage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/classes" element={<ClassesPage />} />
         <Route path="/faculty" element={<FacultyPage />} />

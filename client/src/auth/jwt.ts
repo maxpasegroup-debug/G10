@@ -1,10 +1,12 @@
 import { getStoredToken } from './authService'
 
-/** Payload shape from server `jwt.sign({ id, email, role }, …)`. */
+/** Payload shape from server `jwt.sign({ id, email, role, student_id }, …)`. */
 export type AppJwtPayload = {
   id?: number
   email?: string
   role?: string
+  /** Linked `students.id` for student/parent portal accounts. */
+  student_id?: number | null
   exp?: number
   iat?: number
 }
@@ -69,4 +71,18 @@ export function getAuthenticatedDashboardPath(): string | null {
   const payload = decodeJwtPayload(token)
   if (!token || !payload || isJwtExpired(payload)) return null
   return getDashboardPathForRole(payload.role)
+}
+
+/** Decoded JWT claims for the stored session token (client-side routing only). */
+export function getUserFromToken(): AppJwtPayload | null {
+  return decodeJwtPayload(getStoredToken())
+}
+
+/** Student id from JWT (portal); undefined if missing or invalid. */
+export function getLinkedStudentIdFromToken(): number | undefined {
+  const payload = getUserFromToken()
+  if (!payload) return undefined
+  const sid = payload.student_id
+  if (sid == null || !Number.isFinite(Number(sid))) return undefined
+  return Math.floor(Number(sid))
 }

@@ -100,7 +100,7 @@ export function DashboardHomeSummary({ role, studentId, classId }: Props) {
         setCards([
           {
             label: 'Profile',
-            value: 'Add ?student_id=… for learner stats',
+            value: 'Link your login to a student (admin) to see stats',
           },
           { label: 'Attendance', value: '—' },
           { label: 'Performance', value: '—' },

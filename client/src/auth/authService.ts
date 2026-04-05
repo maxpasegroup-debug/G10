@@ -1,7 +1,7 @@
 import toast from 'react-hot-toast'
 import { API_URL } from '../lib/api'
 import { apiFetch } from '../lib/apiClient'
-import type { AuthResult, OtpLoginPayload, PasswordLoginPayload, UserRole } from './types'
+import type { AuthResult, PasswordLoginPayload } from './types'
 
 const TOKEN_KEY = 'music_academy_token'
 
@@ -18,7 +18,7 @@ export async function loginWithPassword(payload: PasswordLoginPayload): Promise<
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      email: payload.emailOrMobile,
+      identifier: payload.identifier.trim(),
       password: payload.password,
     }),
   })
@@ -34,26 +34,6 @@ export async function loginWithPassword(payload: PasswordLoginPayload): Promise<
       ? apiRole
       : undefined
   return { success: true, role: role ?? payload.role }
-}
-
-export async function loginWithOtp(_payload: OtpLoginPayload): Promise<AuthResult> {
-  void _payload
-  throw new Error('OTP sign-in is not available.')
-}
-
-export async function requestPasswordReset(
-  _emailOrMobile: string,
-  _role: UserRole,
-): Promise<void> {
-  void _emailOrMobile
-  void _role
-  throw new Error('Password reset is not available.')
-}
-
-export async function sendOtp(_emailOrMobile: string, _role: UserRole): Promise<void> {
-  void _emailOrMobile
-  void _role
-  throw new Error('OTP is not available.')
 }
 
 export function getStoredToken(): string | null {

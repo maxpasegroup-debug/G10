@@ -7,6 +7,7 @@ const { uploadGalleryImage } = require('../middleware/uploadGallery')
 
 const router = express.Router()
 
+router.get('/files/:id', asyncHandler(galleryController.serveFileById))
 router.get('/', asyncHandler(galleryController.listPublic))
 
 router.post(

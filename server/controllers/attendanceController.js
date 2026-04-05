@@ -1,12 +1,14 @@
 const attendanceModel = require('../models/attendanceModel')
 const activityLogModel = require('../models/activityLogModel')
+const { resolveListStudentScope } = require('../lib/studentAccessGuard')
 
 async function list(req, res) {
-  const studentId = req.query.student_id ?? req.query.studentId
+  const qSid = req.query.student_id ?? req.query.studentId
+  const studentId = resolveListStudentScope(req, qSid)
   const classId = req.query.class_id ?? req.query.classId
   const { date } = req.query
   const rows = await attendanceModel.listAttendance({
-    studentId: studentId != null && studentId !== '' ? Number(studentId) : undefined,
+    studentId,
     classId: classId != null && classId !== '' ? Number(classId) : undefined,
     date: date || undefined,
   })

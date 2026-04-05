@@ -11,5 +11,7 @@ router.use(verifyToken)
 router.get('/', asyncHandler(classesController.list))
 router.get('/:id', asyncHandler(classesController.getById))
 router.post('/', requireAdmin, asyncHandler(classesController.create))
+router.patch('/:id', requireAdmin, asyncHandler(classesController.update))
+router.delete('/:id', requireAdmin, asyncHandler(classesController.destroy))
 
 module.exports = router

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useMemo, useState, type FormEvent } from
 import toast from 'react-hot-toast'
 import { EmptyState, EmptyStateIconStudents } from '../../components/EmptyState'
 import { authHeaders } from '../../auth/authService'
+import { AuthedImage } from '../../components/AuthedImage'
 import { API_URL, resolveMediaUrl } from '../../lib/api'
 import { apiFetchData } from '../../lib/apiClient'
 
@@ -209,7 +210,7 @@ export function AdminStudentsPage() {
             >
               <div className="flex items-start gap-4 p-5">
                 {student.photo ? (
-                  <img
+                  <AuthedImage
                     src={resolveMediaUrl(student.photo)}
                     alt=""
                     className="h-20 w-20 shrink-0 rounded-2xl object-cover ring-2 ring-primary/[0.06]"
@@ -374,7 +375,7 @@ export function AdminStudentsPage() {
           >
             <div className="flex items-start gap-4">
               {activeStudent.photo ? (
-                <img
+                <AuthedImage
                   src={resolveMediaUrl(activeStudent.photo)}
                   alt=""
                   className="h-24 w-24 rounded-2xl object-cover ring-2 ring-primary/[0.08]"

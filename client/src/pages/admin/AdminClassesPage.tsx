@@ -11,6 +11,7 @@ type ClassRow = {
   subject: string | null
   studio: string | null
   is_live: boolean | null
+  meeting_link: string | null
 }
 
 const subjectOptions = ['Piano', 'Guitar', 'Vocal', 'Drums'] as const
@@ -28,6 +29,7 @@ export function AdminClassesPage() {
   const [subject, setSubject] = useState<string>(subjectOptions[0])
   const [studio, setStudio] = useState('')
   const [isLive, setIsLive] = useState(false)
+  const [meetingLink, setMeetingLink] = useState('')
 
   const load = useCallback(async () => {
     if (!API_URL) {
@@ -63,6 +65,7 @@ export function AdminClassesPage() {
     setSubject(subjectOptions[0])
     setStudio('')
     setIsLive(false)
+    setMeetingLink('')
   }, [])
 
   const openForm = useCallback(() => {
@@ -92,6 +95,7 @@ export function AdminClassesPage() {
           subject,
           studio: studio.trim() || null,
           isLive,
+          meetingLink: meetingLink.trim() || null,
         }),
       })
       setFormOpen(false)
@@ -156,6 +160,12 @@ export function AdminClassesPage() {
                 <p className="mt-1 text-base text-primary/75">
                   <span className="font-semibold text-primary/85">Studio / schedule: </span>
                   {item.studio}
+                </p>
+              ) : null}
+              {item.meeting_link ? (
+                <p className="mt-2 text-sm text-primary/70">
+                  <span className="font-semibold text-primary/85">Meeting link: </span>
+                  <span className="break-all">{item.meeting_link}</span>
                 </p>
               ) : null}
               {item.is_live ? (
@@ -232,6 +242,21 @@ export function AdminClassesPage() {
                   disabled={submitting}
                   className="w-full rounded-xl border border-primary/[0.12] px-4 py-3 text-base text-primary outline-none ring-secondary/30 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
                   placeholder="Room or times"
+                />
+              </div>
+              <div>
+                <label htmlFor={`${formId}-meet`} className="mb-1.5 block text-sm font-semibold text-primary">
+                  Meeting link
+                </label>
+                <input
+                  id={`${formId}-meet`}
+                  type="url"
+                  inputMode="url"
+                  value={meetingLink}
+                  onChange={(e) => setMeetingLink(e.target.value)}
+                  disabled={submitting}
+                  className="w-full rounded-xl border border-primary/[0.12] px-4 py-3 text-base text-primary outline-none ring-secondary/30 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
+                  placeholder="https://meet.google.com/… or Zoom link"
                 />
               </div>
               <label className="flex items-center gap-2 text-sm font-medium text-primary">

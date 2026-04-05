@@ -7,6 +7,7 @@ CREATE TABLE users (
   title TEXT,
   bio TEXT,
   photo_url TEXT,
+  student_id INTEGER,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -15,7 +16,8 @@ CREATE TABLE classes (
   name TEXT,
   subject TEXT,
   studio TEXT,
-  is_live BOOLEAN DEFAULT false
+  is_live BOOLEAN DEFAULT false,
+  meeting_link TEXT
 );
 
 CREATE TABLE students (
@@ -26,11 +28,16 @@ CREATE TABLE students (
   class_id INT REFERENCES classes (id) ON DELETE SET NULL
 );
 
+ALTER TABLE users
+  ADD CONSTRAINT users_student_id_fkey
+  FOREIGN KEY (student_id) REFERENCES students (id) ON DELETE SET NULL;
+
 CREATE TABLE attendance (
   id SERIAL PRIMARY KEY,
   student_id INT,
   date DATE,
-  status TEXT
+  status TEXT,
+  CONSTRAINT fk_attendance_student FOREIGN KEY (student_id) REFERENCES students (id)
 );
 
 CREATE TABLE performance (
@@ -38,7 +45,8 @@ CREATE TABLE performance (
   student_id INT,
   score TEXT,
   remarks TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_performance_student FOREIGN KEY (student_id) REFERENCES students (id)
 );
 
 -- Config-driven assessments (rows upserted by server/lib/syncTests.js)
@@ -78,6 +86,7 @@ CREATE TABLE enquiries (
   name TEXT NOT NULL,
   phone TEXT NOT NULL,
   course TEXT NOT NULL,
+  message TEXT,
   age TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
