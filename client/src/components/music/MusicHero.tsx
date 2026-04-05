@@ -12,6 +12,7 @@ type MusicHeroProps = {
 export function MusicHero(_props: MusicHeroProps) {
   return (
     <div className="hero">
+      <img src="/images/hero-studio.jpg" alt="" className="hero-bg" decoding="async" fetchPriority="high" />
       <div className="hero-content">
         <h1>
           TRIVANDRAM&apos;S 1ST HOME STUDIO

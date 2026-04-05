@@ -8,6 +8,7 @@ export function PageHero({ title, subtitle }: PageHeroProps) {
   return (
     <section className="g10-page-hero" aria-labelledby="page-hero-title">
       <div className="g10-hero__bg">
+        <img src="/images/hero-studio.jpg" alt="" className="g10-hero__bg-img" decoding="async" />
         <div className="g10-page-hero__inner">
           <h1 id="page-hero-title" className="g10-page-hero__title">
             {title}
