@@ -1,9 +1,24 @@
-/** Base URL for the Express API (no trailing slash). Set in `.env` as VITE_API_URL. */
-export const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? ''
+/** Normalized API base (no trailing slash). Empty string when `VITE_API_URL` is unset — use for UI guards before calling `apiUrl`. */
+function readApiBase(): string {
+  const raw = import.meta.env.VITE_API_URL as string | undefined
+  return String(raw ?? '')
+    .trim()
+    .replace(/\/$/, '')
+}
 
+export const API_URL = readApiBase()
+
+/**
+ * Absolute URL for an API path. Always uses the configured backend origin.
+ * @throws Error if `VITE_API_URL` is not set (avoids accidental same-origin `/api/...` calls that break login).
+ */
 export function apiUrl(path: string): string {
+  const base = readApiBase()
+  if (!base) {
+    throw new Error('VITE_API_URL is not set')
+  }
   const p = path.startsWith('/') ? path : `/${path}`
-  return `${API_URL}${p}`
+  return `${base}${p}`
 }
 
 /** Public gallery binary (no JWT; row must exist in gallery_items). */

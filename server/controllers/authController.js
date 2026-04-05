@@ -4,6 +4,14 @@ const userModel = require('../models/userModel')
 
 const SALT_ROUNDS = 10
 
+function ensureJwtSecret() {
+  if (!String(process.env.JWT_SECRET || '').trim()) {
+    const err = new Error('Server authentication is not configured (JWT_SECRET)')
+    err.status = 503
+    throw err
+  }
+}
+
 async function register(req, res) {
   const { name, email, password, role } = req.body
   if (!email || !password) {
@@ -31,6 +39,7 @@ async function register(req, res) {
     role: safeRole,
   })
 
+  ensureJwtSecret()
   const token = jwt.sign(
     {
       id: user.id,
@@ -73,6 +82,7 @@ async function login(req, res) {
     throw err
   }
 
+  ensureJwtSecret()
   const token = jwt.sign(
     {
       id: user.id,

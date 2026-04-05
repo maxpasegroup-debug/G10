@@ -1,3 +1,6 @@
+# Ignore local nested app folder if recreated by mistake
+bgos/
+
 node_modules/
 dist/
 .env
